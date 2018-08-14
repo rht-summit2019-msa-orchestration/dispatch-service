@@ -3,6 +3,8 @@ package com.acme.ride.dispatch.message.listeners;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.acme.ride.dispatch.dao.RideDao;
+import com.acme.ride.dispatch.entity.Ride;
 import com.acme.ride.dispatch.message.model.Message;
 import com.acme.ride.dispatch.message.model.RideRequestedEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -38,6 +40,9 @@ public class RideRequestedEventMessageListener {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private RideDao rideDao;
+
     @Value("${dispatch.process.id}")
     private String processId;
 
@@ -56,6 +61,15 @@ public class RideRequestedEventMessageListener {
             message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideRequestedEvent>>() {});
 
             String rideId = message.getPayload().getRideId();
+
+            Ride ride = new Ride();
+            ride.setRideId(rideId);
+            ride.setPassengerId(message.getPayload().getPassengerId());
+            ride.setPickup(message.getPayload().getPickup());
+            ride.setDestination(message.getPayload().getDestination());
+            ride.setPrice(message.getPayload().getPrice());
+            ride.setStatus(Ride.REQUESTED);
+
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("rideId", rideId);
             parameters.put("traceId", message.getTraceId());
@@ -66,6 +80,7 @@ public class RideRequestedEventMessageListener {
             template.execute((TransactionStatus s) -> {
                 RuntimeEngine engine = runtimeManager.getRuntimeEngine(ProcessInstanceIdContext.get());
                 KieSession ksession = engine.getKieSession();
+                rideDao.create(ride);
                 try {
                     ProcessInstance pi = ((CorrelationAwareProcessRuntime)ksession).startProcess(processId, correlationKey, parameters);
                     log.info("Started dispatch process for ride request " + rideId + ". ProcessInstanceId = " + pi.getId());

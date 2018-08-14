@@ -13,6 +13,8 @@ import javax.persistence.Table;
 @Table(name = "Ride")
 public class Ride {
 
+    public final static int REQUESTED = 1;
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator="RideSeq")
     private long id;

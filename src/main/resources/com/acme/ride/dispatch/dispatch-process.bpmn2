@@ -74,14 +74,14 @@ System.out.println("Process " + _processId + ":" + _id + " for ride " + _rideId 
       <bpmn2:dataInputAssociation id="_rJwFyJ8mEei6taIRf23SjQ">
         <bpmn2:targetRef>_84A2FB44-9E32-41C9-BAD0-50686E706B52_DestinationInputX</bpmn2:targetRef>
         <bpmn2:assignment id="_rJwFyZ8mEei6taIRf23SjQ">
-          <bpmn2:from xsi:type="bpmn2:tFormalExpression" id="_rJwFyp8mEei6taIRf23SjQ"><![CDATA[send.destination.ride-request]]></bpmn2:from>
+          <bpmn2:from xsi:type="bpmn2:tFormalExpression" id="_rJwFyp8mEei6taIRf23SjQ"><![CDATA[send.destination.assign-driver-command]]></bpmn2:from>
           <bpmn2:to xsi:type="bpmn2:tFormalExpression" id="_rJwFy58mEei6taIRf23SjQ">_84A2FB44-9E32-41C9-BAD0-50686E706B52_DestinationInputX</bpmn2:to>
         </bpmn2:assignment>
       </bpmn2:dataInputAssociation>
       <bpmn2:dataInputAssociation id="_rJwFzJ8mEei6taIRf23SjQ">
         <bpmn2:targetRef>_84A2FB44-9E32-41C9-BAD0-50686E706B52_MessageTypeInputX</bpmn2:targetRef>
         <bpmn2:assignment id="_rJwFzZ8mEei6taIRf23SjQ">
-          <bpmn2:from xsi:type="bpmn2:tFormalExpression" id="_rJwFzp8mEei6taIRf23SjQ"><![CDATA[RideRequest]]></bpmn2:from>
+          <bpmn2:from xsi:type="bpmn2:tFormalExpression" id="_rJwFzp8mEei6taIRf23SjQ"><![CDATA[AssignDriverCommand]]></bpmn2:from>
           <bpmn2:to xsi:type="bpmn2:tFormalExpression" id="_rJwFz58mEei6taIRf23SjQ">_84A2FB44-9E32-41C9-BAD0-50686E706B52_MessageTypeInputX</bpmn2:to>
         </bpmn2:assignment>
       </bpmn2:dataInputAssociation>

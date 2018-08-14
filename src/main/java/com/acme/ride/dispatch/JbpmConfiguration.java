@@ -5,11 +5,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.persistence.EntityManagerFactory;
 
-import com.acme.ride.dispatch.wih.SystemOutWorkItemHandler;
+import com.acme.ride.dispatch.message.model.AssignDriverCommand;
+import com.acme.ride.dispatch.wih.MessageSenderWorkItemHandler;
 import org.drools.persistence.api.TransactionManager;
 import org.jbpm.executor.ExecutorServiceFactory;
 import org.jbpm.executor.impl.event.ExecutorEventSupportImpl;
-import org.jbpm.runtime.manager.impl.DefaultRegisterableItemsFactory;
 import org.jbpm.shared.services.impl.TransactionalCommandService;
 import org.kie.api.executor.ExecutorService;
 import org.kie.api.runtime.manager.RegisterableItemsFactory;
@@ -39,13 +39,17 @@ public class JbpmConfiguration {
     @Value("${dispatch.process.ksession}")
     private String dispatchProcessKsession;
 
+    @Autowired
+    private MessageSenderWorkItemHandler messageSenderWorkItemHandler;
+
     public UserGroupCallback userGroupCallback() {
         return new SimpleUserGroupCallback();
     }
 
     public RegisterableItemsFactory registerableItemsFactory() {
-        DefaultRegisterableItemsFactory registerableItemsFactory = new DefaultRegisterableItemsFactory();
-        registerableItemsFactory.addWorkItemHandler("SendMessage", SystemOutWorkItemHandler.class);
+        ByInstanceRegisterableItemsFactory registerableItemsFactory = new ByInstanceRegisterableItemsFactory();
+        messageSenderWorkItemHandler.addPayloadBuilder("AssignDriverCommand", AssignDriverCommand::build);
+        registerableItemsFactory.addWorkItemHandler("SendMessage", messageSenderWorkItemHandler);
         return registerableItemsFactory;
     }
 

@@ -1,6 +1,7 @@
 package com.acme.ride.dispatch.message.listeners;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
@@ -9,8 +10,11 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
+import com.acme.ride.dispatch.dao.RideDao;
+import com.acme.ride.dispatch.entity.Ride;
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.jbpm.process.instance.ProcessInstance;
 import org.junit.Before;
@@ -46,6 +50,12 @@ public class RideRequestedEventMessageListenerTest {
     @Mock
     private ProcessInstance processInstance;
 
+    @Mock
+    private RideDao rideDao;
+
+    @Captor
+    private ArgumentCaptor<Ride> rideCaptor;
+
     @Captor
     private ArgumentCaptor<String> processIdCaptor;
 
@@ -64,6 +74,7 @@ public class RideRequestedEventMessageListenerTest {
         setField(messageListener, null, ptm, PlatformTransactionManager.class);
         setField(messageListener, null, runtimeManager, RuntimeManager.class);
         setField(messageListener, "processId", processId, String.class);
+        setField(messageListener, null, rideDao, RideDao.class);
         when(ptm.getTransaction(any())).thenReturn(transactionStatus);
         when(runtimeManager.getRuntimeEngine(any())).thenReturn(runtimeEngine);
         when(runtimeEngine.getKieSession()).thenReturn(kieSession);
@@ -83,6 +94,16 @@ public class RideRequestedEventMessageListenerTest {
                 "\"price\": 25.0, \"passengerId\": \"passenger\"}}";
 
         messageListener.processMessage(json);
+
+        verify(rideDao).create(rideCaptor.capture());
+        Ride ride = rideCaptor.getValue();
+        assertThat(ride, notNullValue());
+        assertThat(ride.getRideId(), equalTo("ride123"));
+        assertThat(ride.getPickup(), equalTo("pickup"));
+        assertThat(ride.getDestination(), equalTo("destination"));
+        assertThat(ride.getPassengerId(), equalTo("passenger"));
+        assertThat(ride.getPrice(), equalTo(new BigDecimal("25.0")));
+        assertThat(ride.getStatus(), equalTo(Ride.REQUESTED));
 
         verify(kieSession).startProcess(processIdCaptor.capture(), correlationKeyCaptor.capture(), parametersCaptor.capture());
         assertThat(processIdCaptor.getValue(), equalTo(processId));
@@ -109,7 +130,7 @@ public class RideRequestedEventMessageListenerTest {
         messageListener.processMessage(json);
 
         verify(kieSession, never()).startProcess(any(), any(), any());
-
+        verify(rideDao, never()).create(any());
     }
 
     @Test
@@ -120,6 +141,6 @@ public class RideRequestedEventMessageListenerTest {
         messageListener.processMessage(json);
 
         verify(kieSession, never()).startProcess(any(), any(), any());
-
+        verify(rideDao, never()).create(any());
     }
 }
