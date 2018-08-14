@@ -5,11 +5,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.persistence.EntityManagerFactory;
 
+import com.acme.ride.dispatch.wih.SystemOutWorkItemHandler;
 import org.drools.persistence.api.TransactionManager;
 import org.jbpm.executor.ExecutorServiceFactory;
 import org.jbpm.executor.impl.event.ExecutorEventSupportImpl;
+import org.jbpm.runtime.manager.impl.DefaultRegisterableItemsFactory;
 import org.jbpm.shared.services.impl.TransactionalCommandService;
 import org.kie.api.executor.ExecutorService;
+import org.kie.api.runtime.manager.RegisterableItemsFactory;
 import org.kie.api.runtime.manager.RuntimeEnvironment;
 import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.api.task.UserGroupCallback;
@@ -38,6 +41,12 @@ public class JbpmConfiguration {
 
     public UserGroupCallback userGroupCallback() {
         return new SimpleUserGroupCallback();
+    }
+
+    public RegisterableItemsFactory registerableItemsFactory() {
+        DefaultRegisterableItemsFactory registerableItemsFactory = new DefaultRegisterableItemsFactory();
+        registerableItemsFactory.addWorkItemHandler("SendMessage", SystemOutWorkItemHandler.class);
+        return registerableItemsFactory;
     }
 
     @Bean
@@ -84,6 +93,7 @@ public class JbpmConfiguration {
         runtimeEnvironmentFactoryBean.setEntityManagerFactory(entityManagerFactory);
         runtimeEnvironmentFactoryBean.setTransactionManager(transactionManager);
         runtimeEnvironmentFactoryBean.setUserGroupCallback(userGroupCallback());
+        runtimeEnvironmentFactoryBean.setRegisterableItemsFactory(registerableItemsFactory());
         Map<String, Object> environmentEntries = new HashMap<>();
         environmentEntries.put("ExecutorService", executorService(entityManagerFactory, transactionalCommandService));
         runtimeEnvironmentFactoryBean.setEnvironmentEntries(environmentEntries);
