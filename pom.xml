@@ -16,6 +16,7 @@
     <version.spring-cloud-kubernetes>0.2.0.RELEASE</version.spring-cloud-kubernetes>
     <version.narayana>5.6.4.Final</version.narayana>
     <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
+    <version.rhpam>7.7.0.Final-redhat-10</version.rhpam>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -87,6 +88,56 @@
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-core</artifactId>
       <version>${version.hibernate}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-api</artifactId>
+      <version>${version.rhpam}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-persistence-jpa</artifactId>
+      <version>${version.rhpam}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-spring</artifactId>
+      <version>${version.rhpam}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>drools-decisiontables</artifactId>
+          <groupId>org.drools</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>drools-templates</artifactId>
+          <groupId>org.drools</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-kie-services</artifactId>
+      <version>${version.rhpam}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>freemarker</artifactId>
+          <groupId>org.freemarker</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>javassist</artifactId>
+          <groupId>javassist</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-executor</artifactId>
+      <version>${version.rhpam}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jms_2.0_spec</artifactId>
+      <version>1.0-alpha-2</version>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
