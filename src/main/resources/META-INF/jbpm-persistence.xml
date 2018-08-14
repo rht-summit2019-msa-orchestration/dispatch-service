@@ -71,6 +71,9 @@
     <!--added new classes in 7.5.0 -->
     <class>org.jbpm.runtime.manager.impl.jpa.ExecutionErrorInfo</class>
 
+    <!-- Ride entity -->
+    <class>com.acme.ride.dispatch.entity.Ride</class>
+
   </persistence-unit>
 
 </persistence>
