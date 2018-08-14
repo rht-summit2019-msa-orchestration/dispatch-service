@@ -14,6 +14,7 @@
     <version.spring-boot>1.5.14.RELEASE</version.spring-boot>
     <version.fabric8-maven-plugin>3.5.39</version.fabric8-maven-plugin>
     <version.spring-cloud-kubernetes>0.2.0.RELEASE</version.spring-cloud-kubernetes>
+    <version.narayana>5.6.4.Final</version.narayana>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -23,6 +24,21 @@
         <version>${version.spring-boot}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.narayana.jta</groupId>
+        <artifactId>jdbc</artifactId>
+        <version>${version.narayana}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.narayana.jta</groupId>
+        <artifactId>jta</artifactId>
+        <version>${version.narayana}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.narayana.jta</groupId>
+        <artifactId>jms</artifactId>
+        <version>${version.narayana}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -43,6 +59,23 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-kubernetes-config</artifactId>
       <version>${version.spring-cloud-kubernetes}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jta-narayana</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
