@@ -17,6 +17,7 @@
     <version.narayana>5.6.4.Final</version.narayana>
     <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
     <version.rhpam>7.7.0.Final-redhat-10</version.rhpam>
+    <version.amqp-10-jms-spring-boot-starter>1.0.0</version.amqp-10-jms-spring-boot-starter>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -135,9 +136,9 @@
       <version>${version.rhpam}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jms_2.0_spec</artifactId>
-      <version>1.0-alpha-2</version>
+      <groupId>org.amqphub.spring</groupId>
+      <artifactId>amqp-10-jms-spring-boot-starter</artifactId>
+      <version>${version.amqp-10-jms-spring-boot-starter}</version>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
