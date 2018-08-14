@@ -15,6 +15,7 @@
     <version.fabric8-maven-plugin>3.5.39</version.fabric8-maven-plugin>
     <version.spring-cloud-kubernetes>0.2.0.RELEASE</version.spring-cloud-kubernetes>
     <version.narayana>5.6.4.Final</version.narayana>
+    <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -67,6 +68,25 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jta-narayana</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-orm</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate.javax.persistence</groupId>
+      <artifactId>hibernate-jpa-2.1-api</artifactId>
+      <version>1.0.0.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
+      <version>${version.hibernate}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-core</artifactId>
+      <version>${version.hibernate}</version>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
