@@ -4,6 +4,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,10 +13,13 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.Map;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
+import com.acme.ride.dispatch.message.model.RideStartedEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.jbpm.process.instance.ProcessInstance;
 import org.junit.Before;
@@ -28,9 +33,9 @@ import org.mockito.Mock;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
-public class RideRequestedEventMessageListenerTest {
+public class RideEventsMessageListenerTest {
 
-    private RideRequestedEventMessageListener messageListener;
+    private RideEventsMessageListener messageListener;
 
     @Mock
     private PlatformTransactionManager ptm;
@@ -63,6 +68,9 @@ public class RideRequestedEventMessageListenerTest {
     private ArgumentCaptor<CorrelationKey> correlationKeyCaptor;
 
     @Captor
+    private ArgumentCaptor<String> signalCaptor;
+
+    @Captor
     private ArgumentCaptor<Map<String, Object>> parametersCaptor;
 
     private String processId = "dispatch";
@@ -70,7 +78,7 @@ public class RideRequestedEventMessageListenerTest {
     @Before
     public void init() {
         initMocks(this);
-        messageListener = new RideRequestedEventMessageListener();
+        messageListener = new RideEventsMessageListener();
         setField(messageListener, null, ptm, PlatformTransactionManager.class);
         setField(messageListener, null, runtimeManager, RuntimeManager.class);
         setField(messageListener, "processId", processId, String.class);
@@ -82,7 +90,7 @@ public class RideRequestedEventMessageListenerTest {
     }
 
     @Test
-    public void testProcessMessage() {
+    public void testProcessRideRequestedEventMessage() {
 
         String json = "{\"messageType\":\"RideRequestedEvent\"," +
                 "\"id\":\"messageId\"," +
@@ -116,6 +124,50 @@ public class RideRequestedEventMessageListenerTest {
     }
 
     @Test
+    public void test() throws Exception {
+
+        RideStartedEvent event = new RideStartedEvent();
+        event.setRideId("ref-1234");
+        event.setTimestamp(new Date());
+
+        System.out.println(new ObjectMapper().writeValueAsString(event));
+    }
+
+    @Test
+    public void testProcessRideStartedMessage() {
+
+        String json = "{\"messageType\":\"RideStartedEvent\"," +
+                "\"id\":\"messageId\"," +
+                "\"traceId\":\"trace\"," +
+                "\"sender\":\"messageSender\"," +
+                "\"timestamp\":1534336579807," +
+                "\"payload\":{\"rideId\":\"ride-1234\"," +
+                "\"timestamp\": 1534336579807}}";
+
+        Ride ride = new Ride();
+        ride.setRideId("ride-1234");
+        ride.setStatus(Ride.DRIVER_ASSIGNED);
+
+        when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
+
+        Long id = 100L;
+        when(kieSession.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
+        when(processInstance.getId()).thenReturn(id);
+
+        messageListener.processMessage(json);
+
+        verify(kieSession).getProcessInstance(correlationKeyCaptor.capture());
+        CorrelationKey correlationKey = correlationKeyCaptor.getValue();
+        assertThat(correlationKey.getProperties().get(0).getValue(), equalTo("ride-1234"));
+        verify(kieSession).signalEvent(signalCaptor.capture(), isNull(), eq(id));
+        String signal = signalCaptor.getValue();
+        assertThat(signal, equalTo("RideStarted"));
+        verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
+        verify(rideDao).findByRideId("ride-1234");
+        assertThat(ride.getStatus(), equalTo(Ride.STARTED));
+    }
+
+    @Test
     public void testProcessMessageWrongMessageType() {
 
         String json = "{\"messageType\":\"WrongType\"," +
@@ -130,6 +182,7 @@ public class RideRequestedEventMessageListenerTest {
         messageListener.processMessage(json);
 
         verify(kieSession, never()).startProcess(any(), any(), any());
+
         verify(rideDao, never()).create(any());
     }
 

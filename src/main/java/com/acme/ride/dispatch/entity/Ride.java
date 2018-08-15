@@ -21,7 +21,9 @@ public class Ride {
 
     public final static int PASSENGER_CANCELED = 4;
 
-    public final static int EXPIRED = 5;
+    public final static int STARTED = 5;
+
+    public final static int EXPIRED = 6;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator="RideSeq")
