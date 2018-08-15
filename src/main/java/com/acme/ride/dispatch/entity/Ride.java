@@ -15,6 +15,14 @@ public class Ride {
 
     public final static int REQUESTED = 1;
 
+    public final static int DRIVER_ASSIGNED = 2;
+
+    public final static int DRIVER_CANCELED = 3;
+
+    public final static int PASSENGER_CANCELED = 4;
+
+    public final static int EXPIRED = 5;
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator="RideSeq")
     private long id;
@@ -92,4 +100,5 @@ public class Ride {
     public void setDriverId(String driverId) {
         this.driverId = driverId;
     }
+
 }

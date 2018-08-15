@@ -2,7 +2,7 @@
 <bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.omg.org/bpmn20" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:bpsim="http://www.bpsim.org/schemas/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:drools="http://www.jboss.org/drools" id="_rJwFwJ8mEei6taIRf23SjQ" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd http://www.jboss.org/drools drools.xsd http://www.bpsim.org/schemas/1.0 bpsim.xsd" exporter="jBPM Designer" exporterVersion="1.0" expressionLanguage="http://www.mvel.org/2.0" targetNamespace="http://www.omg.org/bpmn20" typeLanguage="http://www.java.com/javaTypes">
   <bpmn2:itemDefinition id="_rideIdItem" structureRef="String"/>
   <bpmn2:itemDefinition id="_traceIdItem" structureRef="String"/>
-  <bpmn2:signal id="_de4852ae-d276-3b88-b7cd-61dc2afe6015" name="DriverRideAccepted"/>
+  <bpmn2:signal id="_de4852ae-d276-3b88-b7cd-61dc2afe6015" name="DriverAssigned"/>
   <bpmn2:itemDefinition id="__84A2FB44-9E32-41C9-BAD0-50686E706B52_TaskNameInputXItem" structureRef="String"/>
   <bpmn2:itemDefinition id="__84A2FB44-9E32-41C9-BAD0-50686E706B52_DestinationInputXItem" structureRef="String"/>
   <bpmn2:itemDefinition id="__84A2FB44-9E32-41C9-BAD0-50686E706B52_MessageTypeInputXItem" structureRef="String"/>
@@ -95,10 +95,10 @@ System.out.println("Process " + _processId + ":" + _id + " for ride " + _rideId 
       </bpmn2:dataInputAssociation>
     </bpmn2:task>
     <bpmn2:sequenceFlow id="_21138CD5-91EF-4E5C-B36F-BCD6AFCD8964" drools:selectable="true" color:background-color="#000000" color:border-color="#000000" color:color="#000000" sourceRef="_50F26008-AA9F-4867-9BB5-EFCD9E81752C" targetRef="_84A2FB44-9E32-41C9-BAD0-50686E706B52"/>
-    <bpmn2:intermediateCatchEvent id="_DA3303D4-5995-4D6B-838C-02376BC47E16" drools:selectable="true" drools:boundaryca="true" color:background-color="#f5deb3" color:border-color="#a0522d" color:color="#000000" name="Driver Ride Accepted">
+    <bpmn2:intermediateCatchEvent id="_DA3303D4-5995-4D6B-838C-02376BC47E16" drools:selectable="true" drools:boundaryca="true" color:background-color="#f5deb3" color:border-color="#a0522d" color:color="#000000" name="Driver Assigned">
       <bpmn2:extensionElements>
         <drools:metaData name="elementname">
-          <drools:metaValue><![CDATA[Driver Ride Accepted]]></drools:metaValue>
+          <drools:metaValue><![CDATA[Driver Assigned]]></drools:metaValue>
         </drools:metaData>
       </bpmn2:extensionElements>
       <bpmn2:incoming>_0A61FE1F-CE3A-4BF9-9981-EE04DE2DD21F</bpmn2:incoming>
