@@ -83,6 +83,7 @@ public class RideEventsMessageListenerTest {
         setField(messageListener, null, runtimeManager, RuntimeManager.class);
         setField(messageListener, "processId", processId, String.class);
         setField(messageListener, null, rideDao, RideDao.class);
+        setField(messageListener, "assignDriverExpireDuration", "5M", String.class);
         when(ptm.getTransaction(any())).thenReturn(transactionStatus);
         when(runtimeManager.getRuntimeEngine(any())).thenReturn(runtimeEngine);
         when(runtimeEngine.getKieSession()).thenReturn(kieSession);
@@ -118,9 +119,10 @@ public class RideEventsMessageListenerTest {
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
         assertThat(correlationKey.getName(), equalTo("ride123"));
         Map<String, Object> parameters = parametersCaptor.getValue();
-        assertThat(parameters.size(), equalTo(2));
+        assertThat(parameters.size(), equalTo(3));
         assertThat(parameters.get("traceId"), equalTo("trace"));
         assertThat(parameters.get("rideId"), equalTo("ride123"));
+        assertThat(parameters.get("assign_driver_expire_duration"), equalTo("5M"));
     }
 
     @Test
@@ -165,6 +167,40 @@ public class RideEventsMessageListenerTest {
         verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
         verify(rideDao).findByRideId("ride-1234");
         assertThat(ride.getStatus(), equalTo(Ride.STARTED));
+    }
+
+    @Test
+    public void testProcessRideSEndedMessage() {
+
+        String json = "{\"messageType\":\"RideEndedEvent\"," +
+                "\"id\":\"messageId\"," +
+                "\"traceId\":\"trace\"," +
+                "\"sender\":\"messageSender\"," +
+                "\"timestamp\":1534336579807," +
+                "\"payload\":{\"rideId\":\"ride123\"," +
+                "\"timestamp\": 1534336579807}}";
+
+        Ride ride = new Ride();
+        ride.setRideId("ride123");
+        ride.setStatus(Ride.STARTED);
+
+        when(rideDao.findByRideId("ride123")).thenReturn(ride);
+
+        Long id = 100L;
+        when(kieSession.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
+        when(processInstance.getId()).thenReturn(id);
+
+        messageListener.processMessage(json);
+
+        verify(kieSession).getProcessInstance(correlationKeyCaptor.capture());
+        CorrelationKey correlationKey = correlationKeyCaptor.getValue();
+        assertThat(correlationKey.getProperties().get(0).getValue(), equalTo("ride123"));
+        verify(kieSession).signalEvent(signalCaptor.capture(), isNull(), eq(id));
+        String signal = signalCaptor.getValue();
+        assertThat(signal, equalTo("RideEnded"));
+        verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
+        verify(rideDao).findByRideId("ride123");
+        assertThat(ride.getStatus(), equalTo(Ride.ENDED));
     }
 
     @Test

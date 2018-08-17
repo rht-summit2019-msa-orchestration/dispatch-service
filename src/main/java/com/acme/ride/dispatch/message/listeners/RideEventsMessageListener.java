@@ -8,6 +8,7 @@ import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
 import com.acme.ride.dispatch.message.model.Message;
 import com.acme.ride.dispatch.message.model.RideRequestedEvent;
+import com.acme.ride.dispatch.message.model.RideEndedEvent;
 import com.acme.ride.dispatch.message.model.RideStartedEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +40,8 @@ public class RideEventsMessageListener {
 
     private static final String TYPE_RIDE_REQUESTED_EVENT = "RideRequestedEvent";
     private static final String TYPE_RIDE_STARTED_EVENT = "RideStartedEvent";
-    private static final String[] ACCEPTED_MESSAGE_TYPES = {TYPE_RIDE_REQUESTED_EVENT, TYPE_RIDE_STARTED_EVENT};
+    private static final String TYPE_RIDE_ENDED_EVENT = "RideEndedEvent";
+    private static final String[] ACCEPTED_MESSAGE_TYPES = {TYPE_RIDE_REQUESTED_EVENT, TYPE_RIDE_STARTED_EVENT, TYPE_RIDE_ENDED_EVENT};
 
     @Autowired
     private RuntimeManager runtimeManager;
@@ -52,6 +54,9 @@ public class RideEventsMessageListener {
 
     @Value("${dispatch.process.id}")
     private String processId;
+
+    @Value("${dispatch.assign.driver.expire.duration}")
+    private String assignDriverExpireDuration;
 
     private CorrelationKeyFactory correlationKeyFactory = KieInternalServices.Factory.get().newCorrelationKeyFactory();
 
@@ -71,6 +76,9 @@ public class RideEventsMessageListener {
                 break;
             case TYPE_RIDE_STARTED_EVENT:
                 processRideStartedEvent(messageAsJson);
+                break;
+            case TYPE_RIDE_ENDED_EVENT:
+                processRideEndedEvent(messageAsJson);
                 break;
         }
     }
@@ -93,6 +101,7 @@ public class RideEventsMessageListener {
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("rideId", rideId);
             parameters.put("traceId", message.getTraceId());
+            parameters.put("assign_driver_expire_duration", assignDriverExpireDuration);
 
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
@@ -138,6 +147,40 @@ public class RideEventsMessageListener {
                     ride.setStatus(Ride.STARTED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("RideStarted", null, instance.getId());
+                    return null;
+                } finally {
+                    runtimeManager.disposeRuntimeEngine(engine);
+                }
+            });
+        } catch (Exception e) {
+            log.error("Error processing msg " + messageAsJson, e);
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    private void processRideEndedEvent(String messageAsJson) {
+        Message<RideEndedEvent> message;
+
+        try {
+
+            message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideEndedEvent>>() {});
+
+            String rideId = message.getPayload().getRideId();
+            CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
+
+            TransactionTemplate template = new TransactionTemplate(transactionManager);
+            template.execute((TransactionStatus s) -> {
+                RuntimeEngine engine = runtimeManager.getRuntimeEngine(CorrelationKeyContext.get(correlationKey));
+                KieSession ksession = engine.getKieSession();
+                try {
+                    Ride ride = rideDao.findByRideId(rideId);
+                    if (ride.getStatus() != Ride.STARTED) {
+                        // handle inconsistent state
+                        return null;
+                    }
+                    ride.setStatus(Ride.ENDED);
+                    ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
+                    ksession.signalEvent("RideEnded", null, instance.getId());
                     return null;
                 } finally {
                     runtimeManager.disposeRuntimeEngine(engine);

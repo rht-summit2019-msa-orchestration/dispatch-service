@@ -23,7 +23,9 @@ public class Ride {
 
     public final static int STARTED = 5;
 
-    public final static int EXPIRED = 6;
+    public final static int ENDED = 6;
+
+    public final static int EXPIRED = 7;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator="RideSeq")
@@ -103,4 +105,22 @@ public class Ride {
         this.driverId = driverId;
     }
 
+    public void setStatusAsString(String statusAsString) {
+        if ("REQUESTED".equalsIgnoreCase(statusAsString)) {
+            status = REQUESTED;
+        } else if ("DRIVER_ASSIGNED".equalsIgnoreCase(statusAsString)) {
+            status = DRIVER_ASSIGNED;
+        } else if ("DRIVER_CANCELED".equalsIgnoreCase(statusAsString)) {
+            status = DRIVER_CANCELED;
+        } else if ("PASSENGER_CANCELED".equalsIgnoreCase(statusAsString)) {
+            status = PASSENGER_CANCELED;
+        } else if ("STARTED".equalsIgnoreCase(statusAsString)) {
+            status = STARTED;
+        } else if ("ENDED".equalsIgnoreCase(statusAsString)) {
+            status = ENDED;
+        } else if ("EXPIRED".equalsIgnoreCase(statusAsString)) {
+            status = EXPIRED;
+        }
+
+    }
 }

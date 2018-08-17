@@ -6,7 +6,9 @@ import java.util.concurrent.TimeUnit;
 import javax.persistence.EntityManagerFactory;
 
 import com.acme.ride.dispatch.message.model.AssignDriverCommand;
+import com.acme.ride.dispatch.message.model.HandlePaymentCommand;
 import com.acme.ride.dispatch.wih.MessageSenderWorkItemHandler;
+import com.acme.ride.dispatch.wih.UpdateRideWorkItemhandler;
 import org.drools.persistence.api.TransactionManager;
 import org.jbpm.executor.ExecutorServiceFactory;
 import org.jbpm.executor.impl.event.ExecutorEventSupportImpl;
@@ -42,6 +44,9 @@ public class JbpmConfiguration {
     @Autowired
     private MessageSenderWorkItemHandler messageSenderWorkItemHandler;
 
+    @Autowired
+    private UpdateRideWorkItemhandler updateRideWorkItemhandler;
+
     public UserGroupCallback userGroupCallback() {
         return new SimpleUserGroupCallback();
     }
@@ -49,7 +54,9 @@ public class JbpmConfiguration {
     public RegisterableItemsFactory registerableItemsFactory() {
         ByInstanceRegisterableItemsFactory registerableItemsFactory = new ByInstanceRegisterableItemsFactory();
         messageSenderWorkItemHandler.addPayloadBuilder("AssignDriverCommand", AssignDriverCommand::build);
+        messageSenderWorkItemHandler.addPayloadBuilder("HandlePaymentCommand", HandlePaymentCommand::build);
         registerableItemsFactory.addWorkItemHandler("SendMessage", messageSenderWorkItemHandler);
+        registerableItemsFactory.addWorkItemHandler("UpdateRide", updateRideWorkItemhandler);
         return registerableItemsFactory;
     }
 
