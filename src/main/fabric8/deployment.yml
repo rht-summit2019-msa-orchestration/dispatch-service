@@ -1,0 +1,53 @@
+spec:
+  template:
+    spec:
+      containers:
+        - resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 500Mi
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: "/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: "/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          volumeMounts:
+            - name: truststore
+              mountPath: /app/truststore
+            - name: config
+              mountPath: /app/config
+          env:
+            - name: JAVA_OPTIONS
+              value: >
+                -Djavax.net.ssl.trustStore=/app/truststore/enmasse.jks -Djavax.net.ssl.trustStorePassword=password
+                -Djavax.net.ssl.trustStoreType=JKS
+                -Dorg.quartz.properties=/app/config/jbpm-quartz.properties
+            - name: GC_MAX_METASPACE_SIZE
+              value: '200'
+            - name: AB_JOLOKIA_OFF
+              value: 'true'
+      volumes:
+        - secret:
+            secretName: enmasse-truststore
+          name: truststore
+        - configMap:
+            name: dispatch-service
+          name: config
