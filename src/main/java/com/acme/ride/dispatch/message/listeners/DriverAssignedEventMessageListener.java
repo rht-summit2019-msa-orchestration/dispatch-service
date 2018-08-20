@@ -64,6 +64,7 @@ public class DriverAssignedEventMessageListener {
                     Ride ride = rideDao.findByRideId(rideId);
                     if (ride.getStatus() != Ride.REQUESTED) {
                         // handle inconsistent state
+                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.REQUESTED);
                         return null;
                     }
                     ride.setDriverId(message.getPayload().getDriverId());

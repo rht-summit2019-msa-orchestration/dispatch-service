@@ -141,7 +141,7 @@ public class RideEventsMessageListener {
                 try {
                     Ride ride = rideDao.findByRideId(rideId);
                     if (ride.getStatus() != Ride.DRIVER_ASSIGNED) {
-                        // handle inconsistent state
+                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.DRIVER_ASSIGNED);
                         return null;
                     }
                     ride.setStatus(Ride.STARTED);
@@ -175,7 +175,7 @@ public class RideEventsMessageListener {
                 try {
                     Ride ride = rideDao.findByRideId(rideId);
                     if (ride.getStatus() != Ride.STARTED) {
-                        // handle inconsistent state
+                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.STARTED);
                         return null;
                     }
                     ride.setStatus(Ride.ENDED);
