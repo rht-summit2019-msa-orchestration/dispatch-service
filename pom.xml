@@ -17,7 +17,7 @@
     <version.narayana>5.6.4.Final</version.narayana>
     <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
     <version.rhpam>7.7.0.Final-redhat-10</version.rhpam>
-    <version.amqp-10-jms-spring-boot-starter>1.0.0</version.amqp-10-jms-spring-boot-starter>
+    <version.amqp-10-jms-spring-boot-starter>0.4.0</version.amqp-10-jms-spring-boot-starter>
   </properties>
   <dependencyManagement>
     <dependencies>
