@@ -66,6 +66,12 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>tomcat-jdbc</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -153,6 +159,16 @@
       <groupId>org.quartz-scheduler</groupId>
       <artifactId>quartz</artifactId>
       <version>2.2.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-dbcp2</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
