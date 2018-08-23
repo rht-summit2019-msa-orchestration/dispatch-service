@@ -54,6 +54,9 @@ public class DriverAssignedEventMessageListener {
             message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<DriverAssignedEvent>>() {});
 
             String rideId = message.getPayload().getRideId();
+
+            log.debug("Processing 'DriverAssignedEvent' message for ride " +  rideId);
+
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
             TransactionTemplate template = new TransactionTemplate(transactionManager);
@@ -86,7 +89,7 @@ public class DriverAssignedEventMessageListener {
         try {
             String messageType = JsonPath.read(messageAsJson, "$.messageType");
             if (!"DriverAssignedEvent".equalsIgnoreCase(messageType) ) {
-                log.info("Message with type '" + messageType + "' is ignored");
+                log.debug("Message with type '" + messageType + "' is ignored");
                 return false;
             }
             return true;

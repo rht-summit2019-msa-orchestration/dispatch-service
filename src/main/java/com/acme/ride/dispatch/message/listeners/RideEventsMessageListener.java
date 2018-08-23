@@ -89,15 +89,18 @@ public class RideEventsMessageListener {
 
             message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideRequestedEvent>>() {});
 
+            String rideId = message.getPayload().getRideId();
+
+            log.debug("Processing 'RideRequestedEvent' message for ride " +  rideId);
+
             Ride ride = new Ride();
-            ride.setRideId(message.getPayload().getRideId());
+            ride.setRideId(rideId);
             ride.setPassengerId(message.getPayload().getPassengerId());
             ride.setPickup(message.getPayload().getPickup());
             ride.setDestination(message.getPayload().getDestination());
             ride.setPrice(message.getPayload().getPrice());
             ride.setStatus(Ride.REQUESTED);
 
-            String rideId = message.getPayload().getRideId();
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("rideId", rideId);
             parameters.put("traceId", message.getTraceId());
@@ -112,7 +115,7 @@ public class RideEventsMessageListener {
                 rideDao.create(ride);
                 try {
                     ProcessInstance pi = ((CorrelationAwareProcessRuntime)ksession).startProcess(processId, correlationKey, parameters);
-                    log.info("Started dispatch process for ride request " + rideId + ". ProcessInstanceId = " + pi.getId());
+                    log.debug("Started dispatch process for ride request " + rideId + ". ProcessInstanceId = " + pi.getId());
                     return null;
                 } finally {
                     runtimeManager.disposeRuntimeEngine(engine);
@@ -128,10 +131,12 @@ public class RideEventsMessageListener {
         Message<RideStartedEvent> message;
 
         try {
-
             message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideStartedEvent>>() {});
 
             String rideId = message.getPayload().getRideId();
+
+            log.debug("Processing 'RideStartedEvent' message for ride " +  rideId);
+
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
             TransactionTemplate template = new TransactionTemplate(transactionManager);
@@ -162,10 +167,12 @@ public class RideEventsMessageListener {
         Message<RideEndedEvent> message;
 
         try {
-
             message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideEndedEvent>>() {});
 
             String rideId = message.getPayload().getRideId();
+
+            log.debug("Processing 'RideEndedEvent' message for ride " +  rideId);
+
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
             TransactionTemplate template = new TransactionTemplate(transactionManager);
@@ -194,7 +201,7 @@ public class RideEventsMessageListener {
 
     private boolean accept(String messageType) {
         if (!Arrays.stream(ACCEPTED_MESSAGE_TYPES).anyMatch(messageType::equals)) {
-            log.info("Message with type '" + messageType + "' is ignored");
+            log.debug("Message with type '" + messageType + "' is ignored");
             return false;
         }
         return true;

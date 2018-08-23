@@ -54,6 +54,9 @@ public class PassengerCanceledEventMessageListener {
             message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<PassengerCanceledEvent>>() {});
 
             String rideId = message.getPayload().getRideId();
+
+            log.debug("Processing 'PassengerCanceled' message for ride " +  rideId);
+
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
             TransactionTemplate template = new TransactionTemplate(transactionManager);
@@ -85,7 +88,7 @@ public class PassengerCanceledEventMessageListener {
         try {
             String messageType = JsonPath.read(messageAsJson, "$.messageType");
             if (!"PassengerCanceledEvent".equalsIgnoreCase(messageType) ) {
-                log.info("Message with type '" + messageType + "' is ignored");
+                log.debug("Message with type '" + messageType + "' is ignored");
                 return false;
             }
             return true;
