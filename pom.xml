@@ -17,7 +17,8 @@
     <version.narayana>5.6.4.Final</version.narayana>
     <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
     <version.rhpam>7.7.0.Final-redhat-10</version.rhpam>
-    <version.amqp-10-jms-spring-boot-starter>0.4.0</version.amqp-10-jms-spring-boot-starter>
+    <version.amqp-10-jms-spring-boot-starter>1.0.0</version.amqp-10-jms-spring-boot-starter>
+    <version.pooled-jms>1.0.1</version.pooled-jms>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -146,6 +147,11 @@
       <groupId>org.amqphub.spring</groupId>
       <artifactId>amqp-10-jms-spring-boot-starter</artifactId>
       <version>${version.amqp-10-jms-spring-boot-starter}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.messaginghub</groupId>
+      <artifactId>pooled-jms</artifactId>
+      <version>${version.pooled-jms}</version>
     </dependency>
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
