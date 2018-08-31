@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.bind.RelaxedDataBinder;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.boot.jta.XADataSourceWrapper;
 import org.springframework.context.annotation.Bean;
@@ -44,6 +45,7 @@ public class DataSourceConfiguration implements BeanClassLoaderAware {
 
     @Bean(name="nonXaDataSource")
     @Qualifier("nonXaDataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.dbcp2")
     public DataSource nonXaDataSource() {
         return properties.initializeDataSourceBuilder().build();
     }
