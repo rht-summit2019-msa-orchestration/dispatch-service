@@ -17,7 +17,6 @@ import org.kie.api.executor.ExecutorService;
 import org.kie.api.runtime.manager.RegisterableItemsFactory;
 import org.kie.api.runtime.manager.RuntimeEnvironment;
 import org.kie.api.runtime.manager.RuntimeManager;
-import org.kie.api.task.UserGroupCallback;
 import org.kie.spring.factorybeans.RuntimeEnvironmentFactoryBean;
 import org.kie.spring.factorybeans.RuntimeManagerFactoryBean;
 import org.kie.spring.jbpm.services.SpringTransactionalCommandService;
@@ -46,10 +45,6 @@ public class JbpmConfiguration {
 
     @Autowired
     private UpdateRideWorkItemhandler updateRideWorkItemhandler;
-
-    public UserGroupCallback userGroupCallback() {
-        return new SimpleUserGroupCallback();
-    }
 
     public RegisterableItemsFactory registerableItemsFactory() {
         ByInstanceRegisterableItemsFactory registerableItemsFactory = new ByInstanceRegisterableItemsFactory();
@@ -103,7 +98,6 @@ public class JbpmConfiguration {
         runtimeEnvironmentFactoryBean.setKsessionName(dispatchProcessKsession);
         runtimeEnvironmentFactoryBean.setEntityManagerFactory(entityManagerFactory);
         runtimeEnvironmentFactoryBean.setTransactionManager(transactionManager);
-        runtimeEnvironmentFactoryBean.setUserGroupCallback(userGroupCallback());
         runtimeEnvironmentFactoryBean.setRegisterableItemsFactory(registerableItemsFactory());
         Map<String, Object> environmentEntries = new HashMap<>();
         environmentEntries.put("ExecutorService", executorService(entityManagerFactory, transactionalCommandService));
