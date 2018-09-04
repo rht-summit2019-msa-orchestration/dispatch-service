@@ -30,7 +30,7 @@ public class UpdateRideWorkItemhandler implements WorkItemHandler {
         if (ride == null) {
             throw new IllegalStateException("Ride with rideId " + rideId + " not found");
         }
-        ride.setStatusAsString((String) status);
+        ride.setStatus(Ride.Status.get((String) status));
         manager.completeWorkItem(workItem.getId(), Collections.emptyMap());
     }
 

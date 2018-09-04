@@ -65,12 +65,12 @@ public class PassengerCanceledEventMessageListener {
                 KieSession ksession = engine.getKieSession();
                 try {
                     Ride ride = rideDao.findByRideId(rideId);
-                    if (ride.getStatus() != Ride.DRIVER_ASSIGNED) {
+                    if (! Ride.Status.DRIVER_ASSIGNED.equals(ride.getStatus())) {
                         // handle inconsistent state
-                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.DRIVER_ASSIGNED);
+                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.Status.DRIVER_ASSIGNED);
                         return null;
                     }
-                    ride.setStatus(Ride.PASSENGER_CANCELED);
+                    ride.setStatus(Ride.Status.PASSENGER_CANCELED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("PassengerCanceled", null, instance.getId());
                     return null;

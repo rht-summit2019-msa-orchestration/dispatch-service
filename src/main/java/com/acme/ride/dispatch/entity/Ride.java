@@ -1,6 +1,9 @@
 package com.acme.ride.dispatch.entity;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -8,24 +11,13 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+
 @Entity
 @SequenceGenerator(name="RideSeq", sequenceName="RIDE_SEQ")
 @Table(name = "Ride")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Ride {
-
-    public final static int REQUESTED = 1;
-
-    public final static int DRIVER_ASSIGNED = 2;
-
-    public final static int DRIVER_CANCELED = 3;
-
-    public final static int PASSENGER_CANCELED = 4;
-
-    public final static int STARTED = 5;
-
-    public final static int ENDED = 6;
-
-    public final static int EXPIRED = 7;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator="RideSeq")
@@ -37,7 +29,7 @@ public class Ride {
 
     private String destination;
 
-    private int status;
+    private Integer status = Status.REQUESTED.statusCode;
 
     private BigDecimal price;
 
@@ -73,12 +65,12 @@ public class Ride {
         this.destination = destination;
     }
 
-    public int getStatus() {
-        return status;
+    public Status getStatus() {
+        return Status.get(status);
     }
 
-    public void setStatus(int status) {
-        this.status = status;
+    public void setStatus(Status status) {
+        this.status = status.statusCode();
     }
 
     public BigDecimal getPrice() {
@@ -105,22 +97,56 @@ public class Ride {
         this.driverId = driverId;
     }
 
-    public void setStatusAsString(String statusAsString) {
-        if ("REQUESTED".equalsIgnoreCase(statusAsString)) {
-            status = REQUESTED;
-        } else if ("DRIVER_ASSIGNED".equalsIgnoreCase(statusAsString)) {
-            status = DRIVER_ASSIGNED;
-        } else if ("DRIVER_CANCELED".equalsIgnoreCase(statusAsString)) {
-            status = DRIVER_CANCELED;
-        } else if ("PASSENGER_CANCELED".equalsIgnoreCase(statusAsString)) {
-            status = PASSENGER_CANCELED;
-        } else if ("STARTED".equalsIgnoreCase(statusAsString)) {
-            status = STARTED;
-        } else if ("ENDED".equalsIgnoreCase(statusAsString)) {
-            status = ENDED;
-        } else if ("EXPIRED".equalsIgnoreCase(statusAsString)) {
-            status = EXPIRED;
+    public enum Status {
+        REQUESTED(1,"requested"),
+        DRIVER_ASSIGNED(2, "driver_assigned"),
+        DRIVER_CANCELED(3, "driver_canceled"),
+        PASSENGER_CANCELED(4, "passenger_canceled"),
+        STARTED(5, "started"),
+        ENDED(6, "ended"),
+        EXPIRED(7, "expired");
+
+        private static final Map<String,Status> ENUM_MAP_BY_NAME;
+
+        private static final Map<Integer,Status> ENUM_MAP_BY_CODE;
+
+        private final int statusCode;
+
+        private String name;
+
+        static {
+            Map<String,Status> mapByName = new HashMap<String,Status>();
+            Map<Integer,Status> mapByCode = new HashMap<Integer,Status>();
+            for (Status instance : Status.values()) {
+                mapByName.put(instance.name,instance);
+                mapByCode.put(instance.statusCode, instance);
+            }
+            ENUM_MAP_BY_CODE = Collections.unmodifiableMap(mapByCode);
+            ENUM_MAP_BY_NAME = Collections.unmodifiableMap(mapByName);
         }
 
+        Status(int statusCode, String name) {
+            this.statusCode = statusCode;
+            this.name = name;
+        }
+
+        public int statusCode() {
+            return statusCode;
+        }
+
+        public String statusName() {
+            return name;
+        }
+
+        public static Status get(String name) {
+            if (name == null) {
+                return null;
+            }
+            return ENUM_MAP_BY_NAME.get(name.toLowerCase());
+        }
+
+        public static Status get(int code) {
+            return ENUM_MAP_BY_CODE.get(code);
+        }
     }
 }

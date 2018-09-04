@@ -83,7 +83,7 @@ public class PassengerCanceledEventMessageListenerTest {
 
         Ride ride = new Ride();
         ride.setRideId("ride-1234");
-        ride.setStatus(Ride.DRIVER_ASSIGNED);
+        ride.setStatus(Ride.Status.DRIVER_ASSIGNED);
 
         when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
 
@@ -101,7 +101,7 @@ public class PassengerCanceledEventMessageListenerTest {
         assertThat(signal, equalTo("PassengerCanceled"));
         verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
         verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.PASSENGER_CANCELED));
+        assertThat(ride.getStatus(), equalTo(Ride.Status.PASSENGER_CANCELED));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class PassengerCanceledEventMessageListenerTest {
 
         Ride ride = new Ride();
         ride.setRideId("ride-1234");
-        ride.setStatus(Ride.EXPIRED);
+        ride.setStatus(Ride.Status.EXPIRED);
 
         when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
 
@@ -125,7 +125,7 @@ public class PassengerCanceledEventMessageListenerTest {
 
         verify(kieSession, never()).signalEvent(any(), any(), anyLong());
         verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.EXPIRED));
+        assertThat(ride.getStatus(), equalTo(Ride.Status.EXPIRED));
     }
 
     @Test

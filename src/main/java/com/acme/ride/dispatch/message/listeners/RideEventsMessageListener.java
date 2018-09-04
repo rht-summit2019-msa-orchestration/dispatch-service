@@ -99,7 +99,7 @@ public class RideEventsMessageListener {
             ride.setPickup(message.getPayload().getPickup());
             ride.setDestination(message.getPayload().getDestination());
             ride.setPrice(message.getPayload().getPrice());
-            ride.setStatus(Ride.REQUESTED);
+            ride.setStatus(Ride.Status.REQUESTED);
 
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("rideId", rideId);
@@ -145,11 +145,11 @@ public class RideEventsMessageListener {
                 KieSession ksession = engine.getKieSession();
                 try {
                     Ride ride = rideDao.findByRideId(rideId);
-                    if (ride.getStatus() != Ride.DRIVER_ASSIGNED) {
-                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.DRIVER_ASSIGNED);
+                    if (! Ride.Status.DRIVER_ASSIGNED.equals(ride.getStatus())) {
+                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.Status.DRIVER_ASSIGNED);
                         return null;
                     }
-                    ride.setStatus(Ride.STARTED);
+                    ride.setStatus(Ride.Status.STARTED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("RideStarted", null, instance.getId());
                     return null;
@@ -181,11 +181,11 @@ public class RideEventsMessageListener {
                 KieSession ksession = engine.getKieSession();
                 try {
                     Ride ride = rideDao.findByRideId(rideId);
-                    if (ride.getStatus() != Ride.STARTED) {
-                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.STARTED);
+                    if (! Ride.Status.STARTED.equals(ride.getStatus())) {
+                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.Status.STARTED);
                         return null;
                     }
-                    ride.setStatus(Ride.ENDED);
+                    ride.setStatus(Ride.Status.ENDED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("RideEnded", null, instance.getId());
                     return null;

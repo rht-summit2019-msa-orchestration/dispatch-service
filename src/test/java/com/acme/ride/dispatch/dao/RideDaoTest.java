@@ -46,7 +46,7 @@ public class RideDaoTest {
         ride.setDestination("destination");
         ride.setPickup("pickup");
         ride.setPrice(new BigDecimal("50.00"));
-        ride.setStatus(1);
+        ride.setStatus(Ride.Status.REQUESTED);
 
         rideDao.create(ride);
         assertThat(ride.getId(), not(equalTo(0)));
@@ -64,7 +64,7 @@ public class RideDaoTest {
         ride.setDestination("destination");
         ride.setPickup("pickup");
         ride.setPrice(new BigDecimal("50.00"));
-        ride.setStatus(1);
+        ride.setStatus(Ride.Status.REQUESTED);
 
         rideDao.create(ride);
 
@@ -87,7 +87,7 @@ public class RideDaoTest {
         ride.setDestination("destination");
         ride.setPickup("pickup");
         ride.setPrice(new BigDecimal("50.00"));
-        ride.setStatus(1);
+        ride.setStatus(Ride.Status.REQUESTED);
 
         rideDao.create(ride);
 

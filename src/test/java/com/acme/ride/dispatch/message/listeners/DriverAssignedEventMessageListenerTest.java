@@ -84,7 +84,7 @@ public class DriverAssignedEventMessageListenerTest {
 
         Ride ride = new Ride();
         ride.setRideId("ride-1234");
-        ride.setStatus(Ride.REQUESTED);
+        ride.setStatus(Ride.Status.REQUESTED);
 
         when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
 
@@ -102,7 +102,7 @@ public class DriverAssignedEventMessageListenerTest {
         assertThat(message, equalTo("DriverAssigned"));
         verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
         verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.DRIVER_ASSIGNED));
+        assertThat(ride.getStatus(), equalTo(Ride.Status.DRIVER_ASSIGNED));
         assertThat(ride.getDriverId(), equalTo("driver"));
     }
 
@@ -119,7 +119,7 @@ public class DriverAssignedEventMessageListenerTest {
 
         Ride ride = new Ride();
         ride.setRideId("ride-1234");
-        ride.setStatus(Ride.EXPIRED);
+        ride.setStatus(Ride.Status.EXPIRED);
 
         when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
 
@@ -127,7 +127,7 @@ public class DriverAssignedEventMessageListenerTest {
 
         verify(kieSession, never()).signalEvent(any(), any(), anyLong());
         verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.EXPIRED));
+        assertThat(ride.getStatus(), equalTo(Ride.Status.EXPIRED));
         assertThat(ride.getDriverId(), nullValue());
     }
 
