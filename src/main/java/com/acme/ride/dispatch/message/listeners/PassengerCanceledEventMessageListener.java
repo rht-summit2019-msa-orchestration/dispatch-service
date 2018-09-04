@@ -1,9 +1,8 @@
 package com.acme.ride.dispatch.message.listeners;
 
 import com.acme.ride.dispatch.dao.RideDao;
-import com.acme.ride.dispatch.entity.Ride;
-import com.acme.ride.dispatch.message.model.PassengerCanceledEvent;
 import com.acme.ride.dispatch.message.model.Message;
+import com.acme.ride.dispatch.message.model.PassengerCanceledEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -64,13 +63,6 @@ public class PassengerCanceledEventMessageListener {
                 RuntimeEngine engine = runtimeManager.getRuntimeEngine(CorrelationKeyContext.get(correlationKey));
                 KieSession ksession = engine.getKieSession();
                 try {
-                    Ride ride = rideDao.findByRideId(rideId);
-                    if (! Ride.Status.DRIVER_ASSIGNED.equals(ride.getStatus())) {
-                        // handle inconsistent state
-                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.Status.DRIVER_ASSIGNED);
-                        return null;
-                    }
-                    ride.setStatus(Ride.Status.PASSENGER_CANCELED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("PassengerCanceled", null, instance.getId());
                     return null;

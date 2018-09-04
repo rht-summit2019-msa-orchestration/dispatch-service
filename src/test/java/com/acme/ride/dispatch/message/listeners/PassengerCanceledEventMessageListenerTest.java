@@ -3,7 +3,6 @@ package com.acme.ride.dispatch.message.listeners;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.never;
@@ -100,32 +99,6 @@ public class PassengerCanceledEventMessageListenerTest {
         String signal = signalCaptor.getValue();
         assertThat(signal, equalTo("PassengerCanceled"));
         verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
-        verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.Status.PASSENGER_CANCELED));
-    }
-
-    @Test
-    public void testProcessMessageWhenRideStatusNotDriverAssigned() {
-
-        String json = "{\"messageType\":\"PassengerCanceledEvent\"," +
-                "\"id\":\"messageId\"," +
-                "\"traceId\":\"trace\"," +
-                "\"sender\":\"messageSender\"," +
-                "\"timestamp\":1521148332397," +
-                "\"payload\":{\"rideId\":\"ride-1234\"," +
-                "\"reason\": \"driver did not show up\"}}";
-
-        Ride ride = new Ride();
-        ride.setRideId("ride-1234");
-        ride.setStatus(Ride.Status.EXPIRED);
-
-        when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
-
-        messageListener.processMessage(json);
-
-        verify(kieSession, never()).signalEvent(any(), any(), anyLong());
-        verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.Status.EXPIRED));
     }
 
     @Test

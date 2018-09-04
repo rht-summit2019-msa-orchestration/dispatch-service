@@ -144,12 +144,6 @@ public class RideEventsMessageListener {
                 RuntimeEngine engine = runtimeManager.getRuntimeEngine(CorrelationKeyContext.get(correlationKey));
                 KieSession ksession = engine.getKieSession();
                 try {
-                    Ride ride = rideDao.findByRideId(rideId);
-                    if (! Ride.Status.DRIVER_ASSIGNED.equals(ride.getStatus())) {
-                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.Status.DRIVER_ASSIGNED);
-                        return null;
-                    }
-                    ride.setStatus(Ride.Status.STARTED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("RideStarted", null, instance.getId());
                     return null;
@@ -180,12 +174,6 @@ public class RideEventsMessageListener {
                 RuntimeEngine engine = runtimeManager.getRuntimeEngine(CorrelationKeyContext.get(correlationKey));
                 KieSession ksession = engine.getKieSession();
                 try {
-                    Ride ride = rideDao.findByRideId(rideId);
-                    if (! Ride.Status.STARTED.equals(ride.getStatus())) {
-                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.Status.STARTED);
-                        return null;
-                    }
-                    ride.setStatus(Ride.Status.ENDED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("RideEnded", null, instance.getId());
                     return null;

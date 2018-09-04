@@ -1,10 +1,8 @@
 package com.acme.ride.dispatch.message.listeners;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.never;
@@ -102,33 +100,7 @@ public class DriverAssignedEventMessageListenerTest {
         assertThat(message, equalTo("DriverAssigned"));
         verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
         verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.Status.DRIVER_ASSIGNED));
         assertThat(ride.getDriverId(), equalTo("driver"));
-    }
-
-    @Test
-    public void testProcessMessageWhenRideStatusNotRequested() {
-
-        String json = "{\"messageType\":\"DriverAssignedEvent\"," +
-                "\"id\":\"messageId\"," +
-                "\"traceId\":\"trace\"," +
-                "\"sender\":\"messageSender\"," +
-                "\"timestamp\":1521148332397," +
-                "\"payload\":{\"rideId\":\"ride-1234\"," +
-                "\"driverId\": \"driver\"}}";
-
-        Ride ride = new Ride();
-        ride.setRideId("ride-1234");
-        ride.setStatus(Ride.Status.EXPIRED);
-
-        when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
-
-        messageListener.processMessage(json);
-
-        verify(kieSession, never()).signalEvent(any(), any(), anyLong());
-        verify(rideDao).findByRideId("ride-1234");
-        assertThat(ride.getStatus(), equalTo(Ride.Status.EXPIRED));
-        assertThat(ride.getDriverId(), nullValue());
     }
 
     @Test

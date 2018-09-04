@@ -65,13 +65,7 @@ public class DriverAssignedEventMessageListener {
                 KieSession ksession = engine.getKieSession();
                 try {
                     Ride ride = rideDao.findByRideId(rideId);
-                    if (! Ride.Status.REQUESTED.equals(ride.getStatus())) {
-                        // handle inconsistent state
-                        log.warn("Ride " + rideId + ". Status: " + ride.getStatus() + ". Expected: " + Ride.Status.REQUESTED);
-                        return null;
-                    }
                     ride.setDriverId(message.getPayload().getDriverId());
-                    ride.setStatus(Ride.Status.DRIVER_ASSIGNED);
                     ProcessInstance instance = ((CorrelationAwareProcessRuntime) ksession).getProcessInstance(correlationKey);
                     ksession.signalEvent("DriverAssigned", null, instance.getId());
                     return null;
