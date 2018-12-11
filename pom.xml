@@ -11,7 +11,7 @@
     <skipTests>false</skipTests>
     <skipITs>${skipTests}</skipITs>
     <skipUTs>${skipTests}</skipUTs>
-    <version.spring-boot>1.5.14.RELEASE</version.spring-boot>
+    <version.spring-boot>1.5.17.RELEASE</version.spring-boot>
     <version.fabric8-maven-plugin>3.5.39</version.fabric8-maven-plugin>
     <version.spring-cloud-kubernetes>0.2.0.RELEASE</version.spring-cloud-kubernetes>
     <version.narayana>5.6.4.Final</version.narayana>
