@@ -80,7 +80,7 @@ public class DriverAssignedEventMessageListenerTest {
         when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
@@ -103,7 +103,7 @@ public class DriverAssignedEventMessageListenerTest {
                 "\"payload\":{\"rideId\":\"ride-1234\"," +
                 "\"driverId\": \"driver\"}}";
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(processService, never()).signalProcessInstance(any(), any(), any());
         verify(rideDao, never()).findByRideId(any());
@@ -114,7 +114,7 @@ public class DriverAssignedEventMessageListenerTest {
         String json = "{\"field1\":\"value1\"," +
                 "\"field2\":\"value2\"}";
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(processService, never()).signalProcessInstance(any(), any(), any());
         verify(rideDao, never()).findByRideId(any());

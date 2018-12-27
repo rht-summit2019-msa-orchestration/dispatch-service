@@ -1,8 +1,5 @@
 package com.acme.ride.dispatch;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import java.util.Collection;
 
 import org.jbpm.kie.services.impl.CustomIdKModuleDeploymentUnit;
@@ -18,20 +15,29 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.jms.annotation.EnableJms;
 
 @SpringBootConfiguration
 @ComponentScan
-@EnableAutoConfiguration
-@EnableJms
+@EnableAutoConfiguration(exclude = { KafkaAutoConfiguration.class })
 public class DispatchServiceApplication {
 
     private final static Logger log = LoggerFactory.getLogger(DispatchServiceApplication.class);
 
     public static void main(String[] args) {
-        SpringApplication.run(DispatchServiceApplication.class, args);
+        SpringApplication application = new SpringApplication(DispatchServiceApplication.class);
+        application.setRegisterShutdownHook(false);
+        ConfigurableApplicationContext context = application.run(args);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("shutdownhook called");
+            context.close();
+        }));
     }
 
     @Bean

@@ -16,7 +16,10 @@ import org.kie.internal.process.CorrelationKeyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jms.annotation.JmsListener;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -38,13 +41,15 @@ public class DriverAssignedEventMessageListener {
 
     private CorrelationKeyFactory correlationKeyFactory = KieInternalServices.Factory.get().newCorrelationKeyFactory();
 
-    @JmsListener(destination = "${listener.destination.driver-assigned-event}",
-            subscription = "${listener.subscription.driver-assigned-event}")
-    public void processMessage(String messageAsJson) {
+    @KafkaListener(topics = "${listener.destination.driver-assigned-event}")
+    public void processMessage(@Payload String messageAsJson, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
+                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+                               @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 
         if (!accept(messageAsJson)) {
             return;
         }
+
         Message<DriverAssignedEvent> message;
         try {
 
@@ -52,7 +57,7 @@ public class DriverAssignedEventMessageListener {
 
             String rideId = message.getPayload().getRideId();
 
-            log.debug("Processing 'DriverAssignedEvent' message for ride " +  rideId);
+            log.debug("Processing 'DriverAssignedEvent' message for ride " + key + " from topic:partition " + topic + ":" + partition);
 
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 

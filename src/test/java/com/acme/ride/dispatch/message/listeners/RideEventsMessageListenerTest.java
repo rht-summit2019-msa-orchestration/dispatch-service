@@ -89,7 +89,7 @@ public class RideEventsMessageListenerTest {
                 "\"pickup\": \"pickup\", \"destination\": \"destination\"," +
                 "\"price\": 25.0, \"passengerId\": \"passenger\"}}";
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(rideDao).create(rideCaptor.capture());
         Ride ride = rideCaptor.getValue();
@@ -133,7 +133,7 @@ public class RideEventsMessageListenerTest {
         when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
@@ -164,7 +164,7 @@ public class RideEventsMessageListenerTest {
         when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
@@ -186,7 +186,7 @@ public class RideEventsMessageListenerTest {
                 "\"pickup\": \"pickup\", \"destination\": \"destination\"," +
                 "\"price\": 25.0, \"passengerId\": \"passenger\"}}";
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(processService, never()).startProcess(any(), any(), any(), any());
 
@@ -198,7 +198,7 @@ public class RideEventsMessageListenerTest {
         String json = "{\"field1\":\"value1\"," +
                 "\"field2\":\"value2\"}";
 
-        messageListener.processMessage(json);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
 
         verify(processService, never()).startProcess(any(), any(), any(), any());
         verify(rideDao, never()).create(any());

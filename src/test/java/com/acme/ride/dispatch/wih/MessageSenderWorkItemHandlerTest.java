@@ -21,12 +21,13 @@ import org.kie.api.runtime.process.WorkItemManager;
 import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
-import org.springframework.jms.core.JmsTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.util.concurrent.SettableListenableFuture;
 
 public class MessageSenderWorkItemHandlerTest {
 
     @Mock
-    private JmsTemplate jmsTemplate;
+    private KafkaTemplate kafkaTemplate;
 
     @Mock
     private ApplicationContext applicationContext;
@@ -49,7 +50,7 @@ public class MessageSenderWorkItemHandlerTest {
     public void setup() {
         initMocks(this);
         wih = new MessageSenderWorkItemHandler();
-        setField(wih, null, jmsTemplate, JmsTemplate.class);
+        setField(wih, null, kafkaTemplate, KafkaTemplate.class);
         setField(wih, null, applicationContext, ApplicationContext.class);
         setField(wih, null, rideDao, RideDao.class);
         when(applicationContext.getEnvironment()).thenReturn(environment);
@@ -70,11 +71,13 @@ public class MessageSenderWorkItemHandlerTest {
         Ride ride = new Ride();
         when(rideDao.findByRideId("testRideId")).thenReturn(ride);
 
+        when(kafkaTemplate.send(any(String.class), any(String.class), any(String.class))).thenReturn(new SettableListenableFuture());
+
         wih.addPayloadBuilder("testMessageType", TestMessageEvent::build);
 
         wih.executeWorkItem(workItem, workItemManager);
         verify(workItemManager).completeWorkItem(eq(1L), anyMap());
-        verify(jmsTemplate).convertAndSend(eq("topic.destination.test"), any(String.class));
+        verify(kafkaTemplate).send(eq("topic.destination.test"), eq("testRideId"), any(String.class));
     }
 
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)

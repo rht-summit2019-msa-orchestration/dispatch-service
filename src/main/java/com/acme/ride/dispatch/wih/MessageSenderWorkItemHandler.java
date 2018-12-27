@@ -10,8 +10,6 @@ import com.acme.ride.dispatch.entity.Ride;
 import com.acme.ride.dispatch.message.model.AssignDriverCommand;
 import com.acme.ride.dispatch.message.model.HandlePaymentCommand;
 import com.acme.ride.dispatch.message.model.Message;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.runtime.process.WorkItemHandler;
 import org.kie.api.runtime.process.WorkItemManager;
@@ -19,8 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.jms.core.JmsTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
+import org.springframework.util.concurrent.ListenableFuture;
 
 @Component("SendMessage")
 public class MessageSenderWorkItemHandler implements WorkItemHandler {
@@ -31,12 +31,12 @@ public class MessageSenderWorkItemHandler implements WorkItemHandler {
     private ApplicationContext applicationContext;
 
     @Autowired
-    private JmsTemplate jmsTemplate;
+    private KafkaTemplate<String, Message<?>> kafkaTemplate;
 
     @Autowired
     private RideDao rideDao;
 
-    private Map<String, Function<Ride, ? extends Object>> payloadBuilders = new HashMap<>();
+    private Map<String, Function<Ride, ?>> payloadBuilders = new HashMap<>();
 
     public MessageSenderWorkItemHandler() {
         addPayloadBuilder("AssignDriverCommand", AssignDriverCommand::build);
@@ -71,19 +71,15 @@ public class MessageSenderWorkItemHandler implements WorkItemHandler {
         Ride ride = rideDao.findByRideId((String)rideId);
         Message<Object> message  = new Message.Builder<Object>((String)messageType, "DispatchService", builder.apply(ride))
                 .traceId(traceId.toString()).build();
-        send(message, destination);
+        send((String) rideId, message, destination);
         manager.completeWorkItem(workItem.getId(), Collections.emptyMap());
     }
 
-    private <T> void send(Message<T> msg, String destination) {
-
-        try {
-            String json = new ObjectMapper().writeValueAsString(msg);
-            jmsTemplate.convertAndSend(destination, json);
-        } catch (JsonProcessingException e) {
-            log.error("Error transforming message to json " + msg, e);
-            throw new RuntimeException(e);
-        }
+    private void send(String rideId, Message<?> msg, String destination) {
+        ListenableFuture<SendResult<String, Message<?>>> future = kafkaTemplate.send(destination, rideId, msg);
+        future.addCallback(
+                result -> log.debug("Sent '" + msg.getMessageType() + "' message for ride " + rideId),
+                ex -> log.error("Error sending '" + msg.getMessageType() + "' message for ride " + rideId, ex));
     }
 
     @Override

@@ -22,7 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jms.annotation.JmsListener;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -58,9 +61,10 @@ public class RideEventsMessageListener {
 
     private CorrelationKeyFactory correlationKeyFactory = KieInternalServices.Factory.get().newCorrelationKeyFactory();
 
-    @JmsListener(destination = "${listener.destination.ride-event}",
-            subscription = "${listener.subscription.ride-event}")
-    public void processMessage(String messageAsJson) {
+    @KafkaListener(topics = "${listener.destination.ride-event}")
+    public void processMessage(@Payload String messageAsJson, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
+                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+                               @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 
         String messageType = getMessageType(messageAsJson);
 
@@ -70,18 +74,18 @@ public class RideEventsMessageListener {
 
         switch (messageType) {
             case TYPE_RIDE_REQUESTED_EVENT:
-                processRideRequestEvent(messageAsJson);
+                processRideRequestEvent(messageAsJson, key, topic, partition);
                 break;
             case TYPE_RIDE_STARTED_EVENT:
-                processRideStartedEvent(messageAsJson);
+                processRideStartedEvent(messageAsJson, key, topic, partition);
                 break;
             case TYPE_RIDE_ENDED_EVENT:
-                processRideEndedEvent(messageAsJson);
+                processRideEndedEvent(messageAsJson, key, topic, partition);
                 break;
         }
     }
 
-    private void processRideRequestEvent(String messageAsJson) {
+    private void processRideRequestEvent(String messageAsJson, String key, String topic, int partition) {
         Message<RideRequestedEvent> message;
         try {
 
@@ -89,7 +93,7 @@ public class RideEventsMessageListener {
 
             String rideId = message.getPayload().getRideId();
 
-            log.debug("Processing 'RideRequestedEvent' message for ride " +  rideId);
+            log.debug("Processing 'RideRequestedEvent' message for ride " + key + " from topic:partition " + topic + ":" + partition);
 
             Ride ride = new Ride();
             ride.setRideId(rideId);
@@ -119,7 +123,7 @@ public class RideEventsMessageListener {
         }
     }
 
-    private void processRideStartedEvent(String messageAsJson) {
+    private void processRideStartedEvent(String messageAsJson, String key, String topic, int partition) {
         Message<RideStartedEvent> message;
 
         try {
@@ -127,7 +131,7 @@ public class RideEventsMessageListener {
 
             String rideId = message.getPayload().getRideId();
 
-            log.debug("Processing 'RideStartedEvent' message for ride " +  rideId);
+            log.debug("Processing 'RideStartedEvent' message for ride " + key + " from topic:partition " + topic + ":" + partition);
 
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
@@ -143,7 +147,7 @@ public class RideEventsMessageListener {
         }
     }
 
-    private void processRideEndedEvent(String messageAsJson) {
+    private void processRideEndedEvent(String messageAsJson, String key, String topic, int partition) {
         Message<RideEndedEvent> message;
 
         try {
@@ -151,7 +155,7 @@ public class RideEventsMessageListener {
 
             String rideId = message.getPayload().getRideId();
 
-            log.debug("Processing 'RideEndedEvent' message for ride " +  rideId);
+            log.debug("Processing 'RideEndedEvent' message for ride "+ key + " from topic:partition " + topic + ":" + partition);
 
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 

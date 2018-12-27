@@ -17,8 +17,7 @@
     <version.narayana>5.9.0.Final</version.narayana>
     <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
     <version.rhpam>7.14.0.Final-redhat-00002</version.rhpam>
-    <version.amqp-10-jms-spring-boot-starter>1.0.0</version.amqp-10-jms-spring-boot-starter>
-    <version.pooled-jms>1.0.1</version.pooled-jms>
+    <version.spring-kafka>1.3.8.RELEASE</version.spring-kafka>
     <version.logback>1.2.3</version.logback>
   </properties>
   <dependencyManagement>
@@ -96,14 +95,14 @@
       <version>${version.rhpam}</version>
     </dependency>
     <dependency>
-      <groupId>org.amqphub.spring</groupId>
-      <artifactId>amqp-10-jms-spring-boot-starter</artifactId>
-      <version>${version.amqp-10-jms-spring-boot-starter}</version>
+      <groupId>org.jboss.spec.javax.jms</groupId>
+      <artifactId>jboss-jms-api_2.0_spec</artifactId>
+      <version>1.0.1.Final-redhat-1</version>
     </dependency>
     <dependency>
-      <groupId>org.messaginghub</groupId>
-      <artifactId>pooled-jms</artifactId>
-      <version>${version.pooled-jms}</version>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
+      <version>${version.spring-kafka}</version>
     </dependency>
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
@@ -113,11 +112,6 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.quartz-scheduler</groupId>
-      <artifactId>quartz</artifactId>
-      <version>2.2.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -223,4 +217,74 @@
       </build>
     </profile>
   </profiles>
+  <repositories>
+    <repository>
+      <id>jboss</id>
+      <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>redhat-techpreview</id>
+      <name>Red Hat Tech Preview</name>
+      <url>https://maven.repository.redhat.com/techpreview/all/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>redhat-ga</id>
+      <name>Red Hat GA</name>
+      <url>https://maven.repository.redhat.com/ga/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>jboss-plugins</id>
+      <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>redhat-techpreview</id>
+      <url>https://maven.repository.redhat.com/techpreview/all/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>redhat-ga</id>
+      <url>https://maven.repository.redhat.com/ga/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
