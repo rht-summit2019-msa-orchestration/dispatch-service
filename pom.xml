@@ -16,7 +16,7 @@
     <version.spring-cloud-kubernetes>0.2.0.RELEASE</version.spring-cloud-kubernetes>
     <version.narayana>5.6.4.Final</version.narayana>
     <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
-    <version.rhpam>7.11.0.Final-redhat-00004</version.rhpam>
+    <version.rhpam>7.14.0.Final-redhat-00002</version.rhpam>
     <version.amqp-10-jms-spring-boot-starter>1.0.0</version.amqp-10-jms-spring-boot-starter>
     <version.pooled-jms>1.0.1</version.pooled-jms>
     <version.logback>1.2.3</version.logback>
