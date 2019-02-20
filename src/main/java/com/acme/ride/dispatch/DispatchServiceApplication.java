@@ -12,6 +12,7 @@ import org.jbpm.services.api.model.ProcessDefinition;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.query.QueryContext;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,8 @@ public class DispatchServiceApplication {
             public void run(String... strings) throws Exception {
                 CustomIdKModuleDeploymentUnit unit = new CustomIdKModuleDeploymentUnit(deploymentId, "com.acme.ride.dispatch", "dispatch-service", "1.0",
                         kbase, ksession);
+
+                unit.setStrategy(RuntimeStrategy.PER_REQUEST);
 
                 KieContainer kieContainer = KieServices.Factory.get().newKieClasspathContainer();
                 unit.setKieContainer(kieContainer);
