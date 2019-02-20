@@ -13,12 +13,10 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
-import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.jbpm.process.instance.ProcessInstance;
+import org.jbpm.services.api.ProcessService;
 import org.junit.Before;
 import org.junit.Test;
-import org.kie.api.runtime.manager.RuntimeEngine;
-import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.internal.process.CorrelationKey;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -37,13 +35,7 @@ public class DriverAssignedEventMessageListenerTest {
     private TransactionStatus transactionStatus;
 
     @Mock
-    private RuntimeManager runtimeManager;
-
-    @Mock
-    private RuntimeEngine runtimeEngine;
-
-    @Mock
-    private CommandBasedStatefulKnowledgeSession kieSession;
+    private ProcessService processService;
 
     @Mock
     private ProcessInstance processInstance;
@@ -62,11 +54,9 @@ public class DriverAssignedEventMessageListenerTest {
         initMocks(this);
         messageListener = new DriverAssignedEventMessageListener();
         setField(messageListener, null, ptm, PlatformTransactionManager.class);
-        setField(messageListener, null, runtimeManager, RuntimeManager.class);
+        setField(messageListener, null, processService, ProcessService.class);
         setField(messageListener, null, rideDao, RideDao.class);
         when(ptm.getTransaction(any())).thenReturn(transactionStatus);
-        when(runtimeManager.getRuntimeEngine(any())).thenReturn(runtimeEngine);
-        when(runtimeEngine.getKieSession()).thenReturn(kieSession);
     }
 
     @Test
@@ -87,18 +77,17 @@ public class DriverAssignedEventMessageListenerTest {
         when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
 
         Long id = 100L;
-        when(kieSession.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
+        when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
         messageListener.processMessage(json);
 
-        verify(kieSession).getProcessInstance(correlationKeyCaptor.capture());
+        verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
         assertThat(correlationKey.getProperties().get(0).getValue(), equalTo("ride-1234"));
-        verify(kieSession).signalEvent(messageCaptor.capture(), isNull(), eq(id));
+        verify(processService).signalProcessInstance(eq(id), messageCaptor.capture(), isNull() );
         String message = messageCaptor.getValue();
         assertThat(message, equalTo("DriverAssigned"));
-        verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
         verify(rideDao).findByRideId("ride-1234");
         assertThat(ride.getDriverId(), equalTo("driver"));
     }
@@ -116,7 +105,7 @@ public class DriverAssignedEventMessageListenerTest {
 
         messageListener.processMessage(json);
 
-        verify(runtimeManager, never()).getRuntimeEngine(any());
+        verify(processService, never()).signalProcessInstance(any(), any(), any());
         verify(rideDao, never()).findByRideId(any());
     }
 
@@ -127,7 +116,7 @@ public class DriverAssignedEventMessageListenerTest {
 
         messageListener.processMessage(json);
 
-        verify(runtimeManager, never()).getRuntimeEngine(any());
+        verify(processService, never()).signalProcessInstance(any(), any(), any());
         verify(rideDao, never()).findByRideId(any());
     }
 }

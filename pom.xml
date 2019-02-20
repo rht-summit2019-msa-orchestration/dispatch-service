@@ -14,7 +14,7 @@
     <version.spring-boot>1.5.17.RELEASE</version.spring-boot>
     <version.fabric8-maven-plugin>3.5.41</version.fabric8-maven-plugin>
     <version.spring-cloud-kubernetes>0.2.0.RELEASE</version.spring-cloud-kubernetes>
-    <version.narayana>5.6.4.Final</version.narayana>
+    <version.narayana>5.9.0.Final</version.narayana>
     <version.hibernate>5.1.10.Final-redhat-1</version.hibernate>
     <version.rhpam>7.14.0.Final-redhat-00002</version.rhpam>
     <version.amqp-10-jms-spring-boot-starter>1.0.0</version.amqp-10-jms-spring-boot-starter>
@@ -60,10 +60,6 @@
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
     <dependency>
@@ -74,21 +70,6 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-kubernetes-config</artifactId>
       <version>${version.spring-cloud-kubernetes}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-jdbc</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.tomcat</groupId>
-          <artifactId>tomcat-jdbc</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>me.snowdrop</groupId>
-      <artifactId>narayana-spring-boot-starter</artifactId>
-      <version>1.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -111,47 +92,7 @@
     </dependency>
     <dependency>
       <groupId>org.kie</groupId>
-      <artifactId>kie-api</artifactId>
-      <version>${version.rhpam}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.drools</groupId>
-      <artifactId>drools-persistence-jpa</artifactId>
-      <version>${version.rhpam}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.kie</groupId>
-      <artifactId>kie-spring</artifactId>
-      <version>${version.rhpam}</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>drools-decisiontables</artifactId>
-          <groupId>org.drools</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>drools-templates</artifactId>
-          <groupId>org.drools</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-kie-services</artifactId>
-      <version>${version.rhpam}</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>freemarker</artifactId>
-          <groupId>org.freemarker</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>javassist</artifactId>
-          <groupId>javassist</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-executor</artifactId>
+      <artifactId>jbpm-spring-boot-starter-basic</artifactId>
       <version>${version.rhpam}</version>
     </dependency>
     <dependency>
@@ -181,6 +122,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-dbcp2</artifactId>
+      <version>2.4.0</version>
       <exclusions>
         <exclusion>
           <groupId>commons-logging</groupId>

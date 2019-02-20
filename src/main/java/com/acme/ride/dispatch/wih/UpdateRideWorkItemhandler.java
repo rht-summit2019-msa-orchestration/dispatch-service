@@ -10,7 +10,7 @@ import org.kie.api.runtime.process.WorkItemManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("UpdateRide")
 public class UpdateRideWorkItemhandler implements WorkItemHandler {
 
     @Autowired

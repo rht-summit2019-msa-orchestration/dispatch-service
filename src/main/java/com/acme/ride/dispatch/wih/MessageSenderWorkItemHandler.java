@@ -7,6 +7,8 @@ import java.util.function.Function;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
+import com.acme.ride.dispatch.message.model.AssignDriverCommand;
+import com.acme.ride.dispatch.message.model.HandlePaymentCommand;
 import com.acme.ride.dispatch.message.model.Message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +22,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("SendMessage")
 public class MessageSenderWorkItemHandler implements WorkItemHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MessageSenderWorkItemHandler.class);
@@ -36,30 +38,34 @@ public class MessageSenderWorkItemHandler implements WorkItemHandler {
 
     private Map<String, Function<Ride, ? extends Object>> payloadBuilders = new HashMap<>();
 
+    public MessageSenderWorkItemHandler() {
+        addPayloadBuilder("AssignDriverCommand", AssignDriverCommand::build);
+        addPayloadBuilder("HandlePaymentCommand", HandlePaymentCommand::build);
+    }
+
     @Override
     public void executeWorkItem(WorkItem workItem, WorkItemManager manager) {
         Map<String, Object> parameters = workItem.getParameters();
         Object messageType = parameters.get("MessageType");
         Object destinationParam = parameters.get("Destination");
-        if (messageType == null || !(messageType instanceof String)
-                || destinationParam == null || !(destinationParam instanceof String)) {
+        if (!(messageType instanceof String) || !(destinationParam instanceof String)) {
             throw new IllegalStateException("Parameters 'messageType', 'destination' cannot be null and must be of type String");
         }
         String destination = applicationContext.getEnvironment().getProperty((String)destinationParam);
         if (destination == null || destination.isEmpty()) {
             throw new IllegalStateException("Destination cannot be null or empty. '" + destinationParam + "' environment property not set" );
         }
-        Function builder = payloadBuilders.get(messageType);
+        Function<Ride, ?> builder = payloadBuilders.get(messageType);
         if (builder == null) {
             throw new IllegalStateException("No builder found for payload'" + messageType + "'");
         }
         Object traceId = parameters.get("traceId");
-        if (traceId == null || !(traceId instanceof String)) {
+        if (!(traceId instanceof String)) {
             log.warn("Parameter traceId not found or not a String. Ignoring");
             traceId = "";
         }
         Object rideId = parameters.get("rideId");
-        if (rideId == null || !(rideId instanceof String)) {
+        if (!(rideId instanceof String)) {
             throw new IllegalStateException("\"Parameters 'rideId' cannot be null and must be of type String\"");
         }
         Ride ride = rideDao.findByRideId((String)rideId);
@@ -85,7 +91,7 @@ public class MessageSenderWorkItemHandler implements WorkItemHandler {
 
     }
 
-    public void addPayloadBuilder(String payloadType, Function<Ride, ? extends Object> builder) {
+    void addPayloadBuilder(String payloadType, Function<Ride, ? extends Object> builder) {
         payloadBuilders.put(payloadType, builder);
     }
 }

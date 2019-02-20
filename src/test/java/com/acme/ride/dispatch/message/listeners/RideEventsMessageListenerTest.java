@@ -13,19 +13,14 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.Map;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
-import com.acme.ride.dispatch.message.model.RideStartedEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.jbpm.process.instance.ProcessInstance;
+import org.jbpm.services.api.ProcessService;
 import org.junit.Before;
 import org.junit.Test;
-import org.kie.api.runtime.manager.RuntimeEngine;
-import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.internal.process.CorrelationKey;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -44,13 +39,7 @@ public class RideEventsMessageListenerTest {
     private TransactionStatus transactionStatus;
 
     @Mock
-    private RuntimeManager runtimeManager;
-
-    @Mock
-    private RuntimeEngine runtimeEngine;
-
-    @Mock
-    private CommandBasedStatefulKnowledgeSession kieSession;
+    private ProcessService processService;
 
     @Mock
     private ProcessInstance processInstance;
@@ -80,14 +69,12 @@ public class RideEventsMessageListenerTest {
         initMocks(this);
         messageListener = new RideEventsMessageListener();
         setField(messageListener, null, ptm, PlatformTransactionManager.class);
-        setField(messageListener, null, runtimeManager, RuntimeManager.class);
+        setField(messageListener, null, processService, ProcessService.class);
         setField(messageListener, "processId", processId, String.class);
         setField(messageListener, null, rideDao, RideDao.class);
         setField(messageListener, "assignDriverExpireDuration", "5M", String.class);
         when(ptm.getTransaction(any())).thenReturn(transactionStatus);
-        when(runtimeManager.getRuntimeEngine(any())).thenReturn(runtimeEngine);
-        when(runtimeEngine.getKieSession()).thenReturn(kieSession);
-        when(kieSession.startProcess(any(), any(), any())).thenReturn(processInstance);
+        when(processService.startProcess(any(), any(), any(), any())).thenReturn(100L);
     }
 
     @Test
@@ -114,7 +101,7 @@ public class RideEventsMessageListenerTest {
         assertThat(ride.getPrice(), equalTo(new BigDecimal("25.0")));
         assertThat(ride.getStatus(), equalTo(Ride.Status.REQUESTED));
 
-        verify(kieSession).startProcess(processIdCaptor.capture(), correlationKeyCaptor.capture(), parametersCaptor.capture());
+        verify(processService).startProcess(any(), processIdCaptor.capture(), correlationKeyCaptor.capture(), parametersCaptor.capture());
         assertThat(processIdCaptor.getValue(), equalTo(processId));
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
         assertThat(correlationKey.getName(), equalTo("ride123"));
@@ -123,16 +110,6 @@ public class RideEventsMessageListenerTest {
         assertThat(parameters.get("traceId"), equalTo("trace"));
         assertThat(parameters.get("rideId"), equalTo("ride123"));
         assertThat(parameters.get("assign_driver_expire_duration"), equalTo("5M"));
-    }
-
-    @Test
-    public void test() throws Exception {
-
-        RideStartedEvent event = new RideStartedEvent();
-        event.setRideId("ref-1234");
-        event.setTimestamp(new Date());
-
-        System.out.println(new ObjectMapper().writeValueAsString(event));
     }
 
     @Test
@@ -153,18 +130,17 @@ public class RideEventsMessageListenerTest {
         when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
 
         Long id = 100L;
-        when(kieSession.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
+        when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
         messageListener.processMessage(json);
 
-        verify(kieSession).getProcessInstance(correlationKeyCaptor.capture());
+        verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
         assertThat(correlationKey.getProperties().get(0).getValue(), equalTo("ride-1234"));
-        verify(kieSession).signalEvent(signalCaptor.capture(), isNull(), eq(id));
+        verify(processService).signalProcessInstance(eq(id), signalCaptor.capture(), isNull());
         String signal = signalCaptor.getValue();
         assertThat(signal, equalTo("RideStarted"));
-        verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
     }
 
     @Test
@@ -185,18 +161,17 @@ public class RideEventsMessageListenerTest {
         when(rideDao.findByRideId("ride123")).thenReturn(ride);
 
         Long id = 100L;
-        when(kieSession.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
+        when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
         messageListener.processMessage(json);
 
-        verify(kieSession).getProcessInstance(correlationKeyCaptor.capture());
+        verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
         assertThat(correlationKey.getProperties().get(0).getValue(), equalTo("ride123"));
-        verify(kieSession).signalEvent(signalCaptor.capture(), isNull(), eq(id));
+        verify(processService).signalProcessInstance(eq(id), signalCaptor.capture(), isNull());
         String signal = signalCaptor.getValue();
         assertThat(signal, equalTo("RideEnded"));
-        verify(runtimeManager).disposeRuntimeEngine(runtimeEngine);
     }
 
     @Test
@@ -213,7 +188,7 @@ public class RideEventsMessageListenerTest {
 
         messageListener.processMessage(json);
 
-        verify(kieSession, never()).startProcess(any(), any(), any());
+        verify(processService, never()).startProcess(any(), any(), any(), any());
 
         verify(rideDao, never()).create(any());
     }
@@ -225,7 +200,7 @@ public class RideEventsMessageListenerTest {
 
         messageListener.processMessage(json);
 
-        verify(kieSession, never()).startProcess(any(), any(), any());
+        verify(processService, never()).startProcess(any(), any(), any(), any());
         verify(rideDao, never()).create(any());
     }
 }
