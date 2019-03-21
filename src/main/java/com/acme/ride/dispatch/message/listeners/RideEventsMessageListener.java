@@ -3,16 +3,21 @@ package com.acme.ride.dispatch.message.listeners;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
 import com.acme.ride.dispatch.message.model.Message;
-import com.acme.ride.dispatch.message.model.RideRequestedEvent;
 import com.acme.ride.dispatch.message.model.RideEndedEvent;
+import com.acme.ride.dispatch.message.model.RideRequestedEvent;
 import com.acme.ride.dispatch.message.model.RideStartedEvent;
+import com.acme.ride.dispatch.tracing.TracingKafkaUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import io.opentracing.Scope;
+import io.opentracing.Tracer;
+import io.opentracing.tag.StringTag;
 import org.jbpm.services.api.ProcessService;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.internal.KieInternalServices;
@@ -25,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -50,6 +56,9 @@ public class RideEventsMessageListener {
     @Autowired
     private RideDao rideDao;
 
+    @Autowired
+    private Tracer tracer;
+
     @Value("${dispatch.deployment.id}")
     private String deploymentId;
 
@@ -64,24 +73,30 @@ public class RideEventsMessageListener {
     @KafkaListener(topics = "${listener.destination.ride-event}")
     public void processMessage(@Payload String messageAsJson, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-                               @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
+                               @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
+                               @Headers Map<String, Object> headers) {
 
-        String messageType = getMessageType(messageAsJson);
+        //create new span
+        Scope scope = TracingKafkaUtils.buildChildSpan("processRideEventMessage", headers, tracer);
 
-        if (messageType.isEmpty() || !accept(messageType)) {
-            return;
-        }
-
-        switch (messageType) {
-            case TYPE_RIDE_REQUESTED_EVENT:
-                processRideRequestEvent(messageAsJson, key, topic, partition);
-                break;
-            case TYPE_RIDE_STARTED_EVENT:
-                processRideStartedEvent(messageAsJson, key, topic, partition);
-                break;
-            case TYPE_RIDE_ENDED_EVENT:
-                processRideEndedEvent(messageAsJson, key, topic, partition);
-                break;
+        try {
+            checkMessageType(messageAsJson).ifPresent(m -> {
+                switch (m) {
+                    case TYPE_RIDE_REQUESTED_EVENT:
+                        processRideRequestEvent(messageAsJson, key, topic, partition);
+                        break;
+                    case TYPE_RIDE_STARTED_EVENT:
+                        processRideStartedEvent(messageAsJson, key, topic, partition);
+                        break;
+                    case TYPE_RIDE_ENDED_EVENT:
+                        processRideEndedEvent(messageAsJson, key, topic, partition);
+                        break;
+                }
+            });
+        } finally {
+            if (scope != null) {
+                scope.close();
+            }
         }
     }
 
@@ -171,20 +186,17 @@ public class RideEventsMessageListener {
         }
     }
 
-    private boolean accept(String messageType) {
-        if (!Arrays.stream(ACCEPTED_MESSAGE_TYPES).anyMatch(messageType::equals)) {
-            log.debug("Message with type '" + messageType + "' is ignored");
-            return false;
-        }
-        return true;
-    }
-
-    private String getMessageType(String messageAsJson) {
+    private Optional<String> checkMessageType(String messageAsJson) {
         try {
-            return JsonPath.read(messageAsJson, "$.messageType");
+            String messageType = JsonPath.read(messageAsJson, "$.messageType");
+            if (Arrays.stream(ACCEPTED_MESSAGE_TYPES).anyMatch(messageType::equals)) {
+                return Optional.of(messageType);
+            }
+            log.debug("Message with type '" + messageType + "' is ignored");
         } catch (Exception e) {
             log.warn("Unexpected message without 'messageType' field.");
-            return "";
         }
+        Optional.ofNullable(tracer.activeSpan()).ifPresent(s -> new StringTag("msg.accepted").set(s, "false"));
+        return Optional.empty();
     }
 }

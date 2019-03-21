@@ -11,8 +11,11 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.util.HashMap;
+
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
+import io.opentracing.Tracer;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.services.api.ProcessService;
 import org.junit.Before;
@@ -43,6 +46,9 @@ public class DriverAssignedEventMessageListenerTest {
     @Mock
     private RideDao rideDao;
 
+    @Mock
+    private Tracer tracer;
+
     @Captor
     private ArgumentCaptor<String> messageCaptor;
 
@@ -56,6 +62,7 @@ public class DriverAssignedEventMessageListenerTest {
         setField(messageListener, null, ptm, PlatformTransactionManager.class);
         setField(messageListener, null, processService, ProcessService.class);
         setField(messageListener, null, rideDao, RideDao.class);
+        setField(messageListener, null, tracer, Tracer.class);
         when(ptm.getTransaction(any())).thenReturn(transactionStatus);
     }
 
@@ -80,7 +87,7 @@ public class DriverAssignedEventMessageListenerTest {
         when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
@@ -103,7 +110,7 @@ public class DriverAssignedEventMessageListenerTest {
                 "\"payload\":{\"rideId\":\"ride-1234\"," +
                 "\"driverId\": \"driver\"}}";
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService, never()).signalProcessInstance(any(), any(), any());
         verify(rideDao, never()).findByRideId(any());
@@ -114,7 +121,7 @@ public class DriverAssignedEventMessageListenerTest {
         String json = "{\"field1\":\"value1\"," +
                 "\"field2\":\"value2\"}";
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService, never()).signalProcessInstance(any(), any(), any());
         verify(rideDao, never()).findByRideId(any());

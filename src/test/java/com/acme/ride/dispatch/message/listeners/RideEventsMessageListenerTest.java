@@ -13,10 +13,12 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
+import io.opentracing.Tracer;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.services.api.ProcessService;
 import org.junit.Before;
@@ -47,6 +49,9 @@ public class RideEventsMessageListenerTest {
     @Mock
     private RideDao rideDao;
 
+    @Mock
+    private Tracer tracer;
+
     @Captor
     private ArgumentCaptor<Ride> rideCaptor;
 
@@ -72,6 +77,7 @@ public class RideEventsMessageListenerTest {
         setField(messageListener, null, processService, ProcessService.class);
         setField(messageListener, "processId", processId, String.class);
         setField(messageListener, null, rideDao, RideDao.class);
+        setField(messageListener, null, tracer, Tracer.class);
         setField(messageListener, "assignDriverExpireDuration", "5M", String.class);
         when(ptm.getTransaction(any())).thenReturn(transactionStatus);
         when(processService.startProcess(any(), any(), any(), any())).thenReturn(100L);
@@ -89,7 +95,7 @@ public class RideEventsMessageListenerTest {
                 "\"pickup\": \"pickup\", \"destination\": \"destination\"," +
                 "\"price\": 25.0, \"passengerId\": \"passenger\"}}";
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(rideDao).create(rideCaptor.capture());
         Ride ride = rideCaptor.getValue();
@@ -133,7 +139,7 @@ public class RideEventsMessageListenerTest {
         when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
@@ -164,7 +170,7 @@ public class RideEventsMessageListenerTest {
         when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
         when(processInstance.getId()).thenReturn(id);
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService).getProcessInstance(correlationKeyCaptor.capture());
         CorrelationKey correlationKey = correlationKeyCaptor.getValue();
@@ -186,7 +192,7 @@ public class RideEventsMessageListenerTest {
                 "\"pickup\": \"pickup\", \"destination\": \"destination\"," +
                 "\"price\": 25.0, \"passengerId\": \"passenger\"}}";
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService, never()).startProcess(any(), any(), any(), any());
 
@@ -198,7 +204,7 @@ public class RideEventsMessageListenerTest {
         String json = "{\"field1\":\"value1\"," +
                 "\"field2\":\"value2\"}";
 
-        messageListener.processMessage(json, "ride-1234", "mytopic", 1);
+        messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService, never()).startProcess(any(), any(), any(), any());
         verify(rideDao, never()).create(any());
