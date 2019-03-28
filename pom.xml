@@ -148,6 +148,10 @@
       <version>${version.jaeger}</version>
     </dependency>
     <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.acme.ride.dispatch</groupId>
       <artifactId>dispatch-service-kjar</artifactId>
       <version>1.0.0</version>
