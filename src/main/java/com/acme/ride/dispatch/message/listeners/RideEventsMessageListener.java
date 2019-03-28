@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
@@ -15,6 +17,8 @@ import com.acme.ride.dispatch.tracing.TracingKafkaUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.tag.StringTag;
@@ -59,6 +63,9 @@ public class RideEventsMessageListener {
     @Autowired
     private Tracer tracer;
 
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     @Value("${dispatch.deployment.id}")
     private String deploymentId;
 
@@ -70,6 +77,15 @@ public class RideEventsMessageListener {
 
     private CorrelationKeyFactory correlationKeyFactory = KieInternalServices.Factory.get().newCorrelationKeyFactory();
 
+    private Map<String, Timer> timers = new HashMap<>();
+
+    @PostConstruct
+    public void initTimers() {
+        timers.put(TYPE_RIDE_REQUESTED_EVENT, Timer.builder("dispatch-service.message.process").tags("type", TYPE_RIDE_REQUESTED_EVENT).register(meterRegistry));
+        timers.put(TYPE_RIDE_STARTED_EVENT, Timer.builder("dispatch-service.message.process").tags("type", TYPE_RIDE_STARTED_EVENT).register(meterRegistry));
+        timers.put(TYPE_RIDE_ENDED_EVENT, Timer.builder("dispatch-service.message.process").tags("type", TYPE_RIDE_ENDED_EVENT).register(meterRegistry));
+    }
+
     @KafkaListener(topics = "${listener.destination.ride-event}")
     public void processMessage(@Payload String messageAsJson, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -80,19 +96,7 @@ public class RideEventsMessageListener {
         Scope scope = TracingKafkaUtils.buildChildSpan("processRideEventMessage", headers, tracer);
 
         try {
-            checkMessageType(messageAsJson).ifPresent(m -> {
-                switch (m) {
-                    case TYPE_RIDE_REQUESTED_EVENT:
-                        processRideRequestEvent(messageAsJson, key, topic, partition);
-                        break;
-                    case TYPE_RIDE_STARTED_EVENT:
-                        processRideStartedEvent(messageAsJson, key, topic, partition);
-                        break;
-                    case TYPE_RIDE_ENDED_EVENT:
-                        processRideEndedEvent(messageAsJson, key, topic, partition);
-                        break;
-                }
-            });
+            checkMessageType(messageAsJson).ifPresent(m -> timedProcessMessage(m, messageAsJson, key, topic, partition));
         } finally {
             if (scope != null) {
                 scope.close();
@@ -104,7 +108,8 @@ public class RideEventsMessageListener {
         Message<RideRequestedEvent> message;
         try {
 
-            message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideRequestedEvent>>() {});
+            message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideRequestedEvent>>() {
+            });
 
             String rideId = message.getPayload().getRideId();
 
@@ -142,7 +147,8 @@ public class RideEventsMessageListener {
         Message<RideStartedEvent> message;
 
         try {
-            message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideStartedEvent>>() {});
+            message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideStartedEvent>>() {
+            });
 
             String rideId = message.getPayload().getRideId();
 
@@ -166,11 +172,12 @@ public class RideEventsMessageListener {
         Message<RideEndedEvent> message;
 
         try {
-            message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideEndedEvent>>() {});
+            message = new ObjectMapper().readValue(messageAsJson, new TypeReference<Message<RideEndedEvent>>() {
+            });
 
             String rideId = message.getPayload().getRideId();
 
-            log.debug("Processing 'RideEndedEvent' message for ride "+ key + " from topic:partition " + topic + ":" + partition);
+            log.debug("Processing 'RideEndedEvent' message for ride " + key + " from topic:partition " + topic + ":" + partition);
 
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
@@ -189,7 +196,7 @@ public class RideEventsMessageListener {
     private Optional<String> checkMessageType(String messageAsJson) {
         try {
             String messageType = JsonPath.read(messageAsJson, "$.messageType");
-            if (Arrays.stream(ACCEPTED_MESSAGE_TYPES).anyMatch(messageType::equals)) {
+            if (Arrays.asList(ACCEPTED_MESSAGE_TYPES).contains(messageType)) {
                 return Optional.of(messageType);
             }
             log.debug("Message with type '" + messageType + "' is ignored");
@@ -198,5 +205,26 @@ public class RideEventsMessageListener {
         }
         Optional.ofNullable(tracer.activeSpan()).ifPresent(s -> new StringTag("msg.accepted").set(s, "false"));
         return Optional.empty();
+    }
+
+    private void timedProcessMessage(String messageType, String messageAsJson, String key, String topic, int partition) {
+
+        Optional<Timer> timer = Optional.ofNullable(timers.get(messageType));
+        long start = System.currentTimeMillis();
+        try {
+            switch (messageType) {
+                case TYPE_RIDE_REQUESTED_EVENT:
+                    processRideRequestEvent(messageAsJson, key, topic, partition);
+                    break;
+                case TYPE_RIDE_STARTED_EVENT:
+                    processRideStartedEvent(messageAsJson, key, topic, partition);
+                    break;
+                case TYPE_RIDE_ENDED_EVENT:
+                    processRideEndedEvent(messageAsJson, key, topic, partition);
+                    break;
+            }
+        } finally {
+            timer.ifPresent(t -> t.record(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS));
+        }
     }
 }

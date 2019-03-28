@@ -13,7 +13,6 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.util.HashMap;
 
-import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
 import io.opentracing.Tracer;
 import org.jbpm.process.instance.ProcessInstance;
@@ -44,9 +43,6 @@ public class PassengerCanceledEventMessageListenerTest {
     private ProcessInstance processInstance;
 
     @Mock
-    private RideDao rideDao;
-
-    @Mock
     private Tracer tracer;
 
     @Captor
@@ -61,7 +57,6 @@ public class PassengerCanceledEventMessageListenerTest {
         messageListener = new PassengerCanceledEventMessageListener();
         setField(messageListener, null, ptm, PlatformTransactionManager.class);
         setField(messageListener, null, processService, ProcessService.class);
-        setField(messageListener, null, rideDao, RideDao.class);
         setField(messageListener, null, tracer, Tracer.class);
         when(ptm.getTransaction(any())).thenReturn(transactionStatus);
     }
@@ -80,8 +75,6 @@ public class PassengerCanceledEventMessageListenerTest {
         Ride ride = new Ride();
         ride.setRideId("ride-1234");
         ride.setStatus(Ride.Status.DRIVER_ASSIGNED);
-
-        when(rideDao.findByRideId("ride-1234")).thenReturn(ride);
 
         Long id = 100L;
         when(processService.getProcessInstance(any(CorrelationKey.class))).thenReturn(processInstance);
@@ -111,7 +104,6 @@ public class PassengerCanceledEventMessageListenerTest {
         messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService, never()).signalProcessInstance(any(), any(), any());
-        verify(rideDao, never()).findByRideId(any());
     }
 
     @Test
@@ -122,6 +114,5 @@ public class PassengerCanceledEventMessageListenerTest {
         messageListener.processMessage(json, "ride-1234", "mytopic", 1, new HashMap<>());
 
         verify(processService, never()).signalProcessInstance(any(), any(), any());
-        verify(rideDao, never()).findByRideId(any());
     }
 }

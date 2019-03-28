@@ -1,15 +1,19 @@
 package com.acme.ride.dispatch.message.listeners;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 
-import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.message.model.Message;
 import com.acme.ride.dispatch.message.model.PassengerCanceledEvent;
 import com.acme.ride.dispatch.tracing.TracingKafkaUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.tag.StringTag;
@@ -36,6 +40,8 @@ public class PassengerCanceledEventMessageListener {
 
     private final static Logger log = LoggerFactory.getLogger(PassengerCanceledEventMessageListener.class);
 
+    private final static String TYPE_PASSENGER_CANCELED_EVENT = "PassengerCanceledEvent";
+
     @Autowired
     private ProcessService processService;
 
@@ -43,10 +49,12 @@ public class PassengerCanceledEventMessageListener {
     private PlatformTransactionManager transactionManager;
 
     @Autowired
-    private RideDao rideDao;
+    private Tracer tracer;
 
     @Autowired
-    private Tracer tracer;
+    private MeterRegistry meterRegistry;
+
+    private Map<String, Timer> timers = new HashMap<>();
 
     private CorrelationKeyFactory correlationKeyFactory = KieInternalServices.Factory.get().newCorrelationKeyFactory();
 
@@ -60,17 +68,26 @@ public class PassengerCanceledEventMessageListener {
         Scope scope = TracingKafkaUtils.buildChildSpan("processPassengerCanceledMessage", headers, tracer);
 
         try {
+            accept(messageAsJson).ifPresent(messageType -> {
+                log.debug("Processing '" + messageType + "' message for ride " + key + " from topic:partition " + topic + ":" + partition);
+                timedProcessMessage(messageType, messageAsJson);
+            });
 
-            if (!accept(messageAsJson)) {
-                return;
+        } finally {
+
+            if (scope != null) {
+                scope.close();
             }
+        }
+    }
+
+    private void processPassengerCanceled(String messageAsJson) {
+        try {
 
             Message<PassengerCanceledEvent> message = new ObjectMapper().readValue(messageAsJson,
                     new TypeReference<Message<PassengerCanceledEvent>>() {});
 
             String rideId = message.getPayload().getRideId();
-
-            log.debug("Processing 'PassengerCanceled' message for ride " + key + " from topic:partition " + topic + ":" + partition);
 
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
@@ -83,19 +100,14 @@ public class PassengerCanceledEventMessageListener {
         } catch (Exception e) {
             log.error("Error processing msg " + messageAsJson, e);
             throw new IllegalStateException(e.getMessage(), e);
-        } finally {
-
-            if (scope != null) {
-                scope.close();
-            }
         }
     }
 
-    private boolean accept(String messageAsJson) {
+    private Optional<String> accept(String messageAsJson) {
         try {
             String messageType = JsonPath.read(messageAsJson, "$.messageType");
             if ("PassengerCanceledEvent".equalsIgnoreCase(messageType) ) {
-                return true;
+                return Optional.of(messageType);
             } else {
                 log.debug("Message with type '" + messageType + "' is ignored");
             }
@@ -103,6 +115,21 @@ public class PassengerCanceledEventMessageListener {
             log.warn("Unexpected message without 'messageType' field.");
         }
         Optional.ofNullable(tracer.activeSpan()).ifPresent(s -> new StringTag("msg.accepted").set(s, "false"));
-        return false;
+        return Optional.empty();
+    }
+
+    @PostConstruct
+    public void initTimers() {
+        timers.put(TYPE_PASSENGER_CANCELED_EVENT, Timer.builder("dispatch-service.message.process").tags("type",TYPE_PASSENGER_CANCELED_EVENT).register(meterRegistry));
+    }
+
+    private void timedProcessMessage(String messageType, String messageAsJson) {
+        Optional<Timer> timer = Optional.ofNullable(timers.get(messageType));
+        long start = System.currentTimeMillis();
+        try {
+            processPassengerCanceled(messageAsJson);
+        } finally {
+            timer.ifPresent(t -> t.record(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS));
+        }
     }
 }

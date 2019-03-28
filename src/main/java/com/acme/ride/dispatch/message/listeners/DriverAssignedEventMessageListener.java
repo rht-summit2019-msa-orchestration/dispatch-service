@@ -1,7 +1,10 @@
 package com.acme.ride.dispatch.message.listeners;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
@@ -11,6 +14,8 @@ import com.acme.ride.dispatch.tracing.TracingKafkaUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.tag.StringTag;
@@ -37,6 +42,8 @@ public class DriverAssignedEventMessageListener {
 
     private final static Logger log = LoggerFactory.getLogger(DriverAssignedEventMessageListener.class);
 
+    private final static String TYPE_DRIVER_ASSIGNED_EVENT = "DriverAssignedEvent";
+
     @Autowired
     private ProcessService processService;
 
@@ -48,6 +55,11 @@ public class DriverAssignedEventMessageListener {
 
     @Autowired
     private Tracer tracer;
+
+    @Autowired
+    private MeterRegistry meterRegistry;
+
+    private Map<String, Timer> timers = new HashMap<>();
 
     private CorrelationKeyFactory correlationKeyFactory = KieInternalServices.Factory.get().newCorrelationKeyFactory();
 
@@ -61,17 +73,23 @@ public class DriverAssignedEventMessageListener {
         Scope scope = TracingKafkaUtils.buildChildSpan("processRideEventMessage", headers, tracer);
 
         try {
-
-            if (!accept(messageAsJson)) {
-                return;
+            accept(messageAsJson).ifPresent(messageType -> {
+                log.debug("Processing '" + messageType + "' message for ride " + key + " from topic:partition " + topic + ":" + partition);
+                timedProcessMessage(messageType, messageAsJson);
+            });
+        } finally {
+            if (scope != null) {
+                scope.close();
             }
+        }
+    }
 
+    private void processDriverAssigned(String messageAsJson) {
+        try {
             Message<DriverAssignedEvent> message = new ObjectMapper().readValue(messageAsJson,
                     new TypeReference<Message<DriverAssignedEvent>>() {});
 
             String rideId = message.getPayload().getRideId();
-
-            log.debug("Processing 'DriverAssignedEvent' message for ride " + key + " from topic:partition " + topic + ":" + partition);
 
             CorrelationKey correlationKey = correlationKeyFactory.newCorrelationKey(rideId);
 
@@ -86,18 +104,14 @@ public class DriverAssignedEventMessageListener {
         } catch (Exception e) {
             log.error("Error processing msg " + messageAsJson, e);
             throw new IllegalStateException(e.getMessage(), e);
-        } finally {
-            if (scope != null) {
-                scope.close();
-            }
         }
     }
 
-    private boolean accept(String messageAsJson) {
+    private Optional<String> accept(String messageAsJson) {
         try {
             String messageType = JsonPath.read(messageAsJson, "$.messageType");
-            if ("DriverAssignedEvent".equalsIgnoreCase(messageType) ) {
-                return true;
+            if (TYPE_DRIVER_ASSIGNED_EVENT.equalsIgnoreCase(messageType) ) {
+                return Optional.of(messageType);
             } else {
                 log.debug("Message with type '" + messageType + "' is ignored");
             }
@@ -105,7 +119,21 @@ public class DriverAssignedEventMessageListener {
             log.warn("Unexpected message without 'messageType' field.");
         }
         Optional.ofNullable(tracer.activeSpan()).ifPresent(s -> new StringTag("msg.accepted").set(s, "false"));
-        return false;
+        return Optional.empty();
     }
 
+    @PostConstruct
+    public void initTimers() {
+        timers.put(TYPE_DRIVER_ASSIGNED_EVENT, Timer.builder("dispatch-service.message.process").tags("type",TYPE_DRIVER_ASSIGNED_EVENT).register(meterRegistry));
+    }
+
+    private void timedProcessMessage(String messageType, String messageAsJson) {
+        Optional<Timer> timer = Optional.ofNullable(timers.get(messageType));
+        long start = System.currentTimeMillis();
+        try {
+            processDriverAssigned(messageAsJson);
+        } finally {
+            timer.ifPresent(t -> t.record(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS));
+        }
+    }
 }
