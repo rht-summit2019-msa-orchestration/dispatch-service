@@ -10,13 +10,14 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.acme.ride.dispatch.entity.Ride;
+import me.snowdrop.boot.narayana.autoconfigure.NarayanaConfiguration;
 import org.jbpm.springboot.autoconfigure.JBPMAutoConfiguration;
+import org.jbpm.springboot.datasources.JBPMDataSourceAutoConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
-import org.springframework.boot.autoconfigure.transaction.jta.NarayanaJtaConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -26,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(classes = {JBPMAutoConfiguration.class, RideDao.class, JpaProperties.class, NarayanaJtaConfiguration.class, DataSourceProperties.class})
+@ContextConfiguration(classes = {JBPMAutoConfiguration.class, JBPMDataSourceAutoConfiguration.class, RideDao.class, JpaProperties.class, NarayanaConfiguration .class, DataSourceProperties.class})
 public class RideDaoTest {
 
     @Autowired

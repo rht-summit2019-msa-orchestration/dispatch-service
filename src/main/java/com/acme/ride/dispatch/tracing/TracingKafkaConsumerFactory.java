@@ -37,6 +37,11 @@ public class TracingKafkaConsumerFactory<K, V> implements ConsumerFactory<K, V> 
     }
 
     @Override
+    public Consumer<K, V> createConsumer(String groupId, String clientIdPrefix, String clientIdSuffix) {
+        return new TracingKafkaConsumer<>(consumerFactory.createConsumer(groupId, clientIdPrefix, clientIdSuffix), tracer);
+    }
+
+    @Override
     public boolean isAutoCommit() {
         return consumerFactory.isAutoCommit();
     }
