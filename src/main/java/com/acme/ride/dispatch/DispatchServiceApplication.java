@@ -47,12 +47,6 @@ public class DispatchServiceApplication {
             @Value("${dispatch.deployment.id}")
             private String deploymentId;
 
-            @Value("${dispatch.process.kbase}")
-            private String kbase;
-
-            @Value("${dispatch.process.ksession}")
-            private String ksession;
-
             @Autowired
             private DeploymentService deploymentService;
 
@@ -61,8 +55,7 @@ public class DispatchServiceApplication {
 
             @Override
             public void run(String... strings) throws Exception {
-                CustomIdKModuleDeploymentUnit unit = new CustomIdKModuleDeploymentUnit(deploymentId, "com.acme.ride.dispatch", "dispatch-service", "1.0",
-                        kbase, ksession);
+                CustomIdKModuleDeploymentUnit unit = new CustomIdKModuleDeploymentUnit(deploymentId, "com.acme.ride.dispatch", "dispatch-service", "1.0.0");
 
                 unit.setStrategy(RuntimeStrategy.PER_REQUEST);
 
@@ -73,7 +66,7 @@ public class DispatchServiceApplication {
                 deploymentService.deploy(unit);
 
                 Collection<ProcessDefinition> processes = runtimeDataService.getProcesses(new QueryContext());
-                processes.forEach(p -> log.info(p.toString()));
+                processes.forEach(p -> log.info(p.getName()));
             }
         };
     }

@@ -1,8 +1,8 @@
 package com.acme.ride.dispatch.wih;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -13,6 +13,7 @@ import java.util.Map;
 
 import com.acme.ride.dispatch.dao.RideDao;
 import com.acme.ride.dispatch.entity.Ride;
+import com.acme.ride.dispatch.message.model.Message;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,13 +72,13 @@ public class MessageSenderWorkItemHandlerTest {
         Ride ride = new Ride();
         when(rideDao.findByRideId("testRideId")).thenReturn(ride);
 
-        when(kafkaTemplate.send(any(String.class), any(String.class), any(String.class))).thenReturn(new SettableListenableFuture());
+        when(kafkaTemplate.send(any(String.class), any(String.class), any(Message.class))).thenReturn(new SettableListenableFuture());
 
         wih.addPayloadBuilder("testMessageType", TestMessageEvent::build);
 
         wih.executeWorkItem(workItem, workItemManager);
         verify(workItemManager).completeWorkItem(eq(1L), anyMap());
-        verify(kafkaTemplate).send(eq("topic.destination.test"), eq("testRideId"), any(String.class));
+        verify(kafkaTemplate).send(eq("topic.destination.test"), eq("testRideId"), any(Message.class));
     }
 
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
