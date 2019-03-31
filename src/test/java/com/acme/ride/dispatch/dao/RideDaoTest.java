@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(classes = {JBPMAutoConfiguration.class, JBPMDataSourceAutoConfiguration.class, RideDao.class, JpaProperties.class, NarayanaConfiguration .class, DataSourceProperties.class})
+@ContextConfiguration(classes = {JBPMAutoConfiguration.class, JBPMDataSourceAutoConfiguration.class, RideDao.class, JpaProperties.class, NarayanaConfiguration.class, DataSourceProperties.class})
 public class RideDaoTest {
 
     @Autowired
