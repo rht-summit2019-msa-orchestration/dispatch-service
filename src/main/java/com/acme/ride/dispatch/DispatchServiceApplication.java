@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 
 @SpringBootConfiguration
 @ComponentScan
@@ -53,6 +54,9 @@ public class DispatchServiceApplication {
             @Autowired
             private RuntimeDataService runtimeDataService;
 
+            @Autowired
+            private KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
+
             @Override
             public void run(String... strings) throws Exception {
                 CustomIdKModuleDeploymentUnit unit = new CustomIdKModuleDeploymentUnit(deploymentId, "com.acme.ride.dispatch", "dispatch-service", "1.0.0");
@@ -67,6 +71,8 @@ public class DispatchServiceApplication {
 
                 Collection<ProcessDefinition> processes = runtimeDataService.getProcesses(new QueryContext());
                 processes.forEach(p -> log.info(p.getName()));
+
+                kafkaListenerEndpointRegistry.start();
             }
         };
     }
